@@ -672,7 +672,7 @@ elif st.session_state.current_page == 'sales_reports':
 st.markdown("""
 <div style="text-align: center; color: #ecf0f1; padding: 2rem; background: linear-gradient(to bottom, #0d0f14, #000000); border-radius: 15px; margin: 2rem 0;">
     <h3> CM Vehicle Management System</h3>
-    <p><strong>Professional Vehicle Sales & Management Dashboard</strong></p>
+    <p><strong>Vehicle Sales & Management Dashboard</strong></p>
     <p>Built with Group AT | © 2025 CM Vehicle Management. All rights reserved.</p>
     <p style="font-size: 0.9rem; opacity: 0.8;">
         📧 Email: chamod@cmvehicles.com | 📞 Phone: +94 70 520 6400 
