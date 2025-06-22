@@ -47,9 +47,45 @@ def load_sample_data():
     bike_models = ['Dio', 'Pulsar', 'Fz', 'Ct100', 'Platina']
     three_wheel_models = ['Auto Rickshaw', 'Three Wheeler']
     
-    # Generate sample data
+    # Sri Lankan names database
+    sri_lankan_first_names = [
+        'Kamal', 'Nimal', 'Sunil', 'Rohan', 'Ajith', 'Chaminda', 'Pradeep', 'Nuwan', 'Dinesh', 'Mahesh',
+        'Saman', 'Ruwan', 'Gayan', 'Chathura', 'Thilina', 'Kasun', 'Lahiru', 'Dilan', 'Buddhika', 'Sampath',
+        'Kumara', 'Thushara', 'Indika', 'Chandana', 'Tharaka', 'Sandun', 'Prasad', 'Udaya', 'Janaka', 'Dilshan',
+        'Sachith', 'Ranjan', 'Lakmal', 'Nalin', 'Dileepa', 'Charith', 'Ashan', 'Ranil', 'Asanka', 'Chamara',
+        'Raveena', 'Sewwandi', 'Nimali', 'Rashika', 'Sandani', 'Thanuja', 'Kavisha', 'Dilrukshi', 'Chathurika', 'Dinusha',
+        'Gayani', 'Malani', 'Anusha', 'Shamali', 'Nadeeka', 'Priyanka', 'Charuni', 'Manisha', 'Randika', 'Tharushi',
+        'Hiruni', 'Sachini', 'Buddhini', 'Nayana', 'Ishara', 'Amila', 'Suranga', 'Darshana', 'Isuru', 'Shanka'
+    ]
+    
+    sri_lankan_last_names = [
+        'Silva', 'Perera', 'Fernando', 'Jayawardena', 'Gunasekara', 'Wijesinghe', 'Rajapaksa', 'Wickramasinghe',
+        'Mendis', 'Bandara', 'Rathnayaka', 'Dissanayaka', 'Gunawardena', 'Senaratne', 'Wijerathne', 'Peiris',
+        'Kumara', 'Weerasinghe', 'Jayasuriya', 'Ranasinghe', 'Gamage', 'Amarasinghe', 'Liyanage', 'Abeywardena',
+        'Abeysinghe', 'Wickremaratne', 'Ratnayake', 'Kumarasinghe', 'Priyantha', 'Samaraweera', 'Herath', 'Karunaratne',
+        'Jayaratne', 'Weerasekara', 'Kodikara', 'Senanayake', 'Wickramage', 'Dharmasena', 'Pathirana', 'Madusanka'
+    ]
+    
+    # Sri Lankan cities and areas
+    sri_lankan_addresses = [
+        'Colombo 01', 'Colombo 02', 'Colombo 03', 'Colombo 04', 'Colombo 05', 'Colombo 06', 'Colombo 07',
+        'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Panadura', 'Kalutara', 'Beruwala', 'Bentota', 'Galle',
+        'Matara', 'Tangalle', 'Hambantota', 'Ratnapura', 'Embilipitiya', 'Balangoda', 'Kandy', 'Peradeniya',
+        'Gampola', 'Nawalapitiya', 'Hatton', 'Nuwara Eliya', 'Bandarawela', 'Badulla', 'Monaragala', 'Wellawaya',
+        'Kurunegala', 'Puttalam', 'Chilaw', 'Negombo', 'Wattala', 'Ja-Ela', 'Gampaha', 'Kadawatha', 'Ragama',
+        'Kelaniya', 'Maharagama', 'Kottawa', 'Piliyandala', 'Homagama', 'Avissawella', 'Malabe', 'Battaramulla',
+        'Anuradhapura', 'Polonnaruwa', 'Dambulla', 'Sigiriya', 'Matale', 'Akurana', 'Trincomalee', 'Batticaloa',
+        'Ampara', 'Kalmunai', 'Jaffna', 'Vavuniya', 'Mannar', 'Kilinochchi', 'Mullativu'
+    ]
+    
+    # Sri Lankan vehicle number prefixes (actual format)
+    vehicle_prefixes = ['WP', 'CP', 'SP', 'EP', 'NP', 'NC', 'UP', 'SG', 'NW']
+    
+    # Generate sample data with proper 12-month distribution
     data = []
-    for i in range(1, 101):
+    current_year = datetime.now().year
+    
+    for i in range(1, 201):  # Increased sample size for better distribution
         vehicle_type = np.random.choice(['Bike', 'Three Wheeler'], p=[0.7, 0.3])
         if vehicle_type == 'Bike':
             model = np.random.choice(bike_models)
@@ -58,13 +94,51 @@ def load_sample_data():
             model = np.random.choice(three_wheel_models)
             price_range = (800000, 1000000)
         
+        # Generate dates across all 12 months of current year
+        random_month = np.random.randint(1, 13)
+        random_day = np.random.randint(1, 29)  # Safe day range for all months
+        purchase_date = datetime(current_year, random_month, random_day)
+        
+        # Generate Sri Lankan customer details
+        first_name = np.random.choice(sri_lankan_first_names)
+        last_name = np.random.choice(sri_lankan_last_names)
+        customer_name = f"{first_name} {last_name}"
+        
+        # Generate Sri Lankan style address
+        house_no = np.random.randint(1, 999)
+        street_names = ['Galle Road', 'Kandy Road', 'Negombo Road', 'Main Street', 'Temple Road', 
+                       'School Lane', 'Church Street', 'Station Road', 'Lake Road', 'Hill Street']
+        street = np.random.choice(street_names)
+        city = np.random.choice(sri_lankan_addresses)
+        address = f"{house_no}/{np.random.randint(1, 20)}, {street}, {city}"
+        
+        # Generate Sri Lankan NIC number (format: YYMMDDXXXV or new format)
+        birth_year = np.random.randint(70, 99)  # 1970-1999
+        if np.random.random() > 0.5:  # Old format
+            nic = f"{birth_year:02d}{np.random.randint(100, 365):03d}{np.random.randint(1000, 9999):04d}V"
+        else:  # New format
+            nic = f"{1900 + birth_year}{np.random.randint(100, 365):03d}{np.random.randint(10000, 99999):05d}"
+        
+        # Generate phone number (Sri Lankan format)
+        phone = f"0{np.random.choice([70, 71, 72, 75, 76, 77, 78])}{np.random.randint(1000000, 9999999)}"
+        
+        # Generate vehicle number (Sri Lankan format)
+        prefix = np.random.choice(vehicle_prefixes)
+        if vehicle_type == 'Bike':
+            vehicle_number = f"{prefix} {np.random.choice(['CAA', 'CAB', 'CAC', 'CAD', 'CAE'])} {np.random.randint(1000, 9999)}"
+        else:
+            vehicle_number = f"{prefix} {np.random.choice(['PA', 'PB', 'PC', 'PD', 'PE'])} {np.random.randint(1000, 9999)}"
+        
         data.append({
-            'VehicleNumber': f"ABC {np.random.randint(1000, 9999)}",
+            'VehicleNumber': vehicle_number,
             'CustomerId': i,
-            'CustomerName': f"Customer_{i}",
+            'CustomerName': customer_name,
+            'Address': address,
+            'NIC': nic,
+            'Phone': phone,
             'VehicleType': vehicle_type,
             'Model': model,
-            'PurchaseDate': pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(0, 365*2)),
+            'PurchaseDate': purchase_date,
             'Payment': np.random.randint(*price_range),
             'PaymentMethod': np.random.choice(['Cash', 'Credit Card', 'Bank Transfer', 'Cheque']),
             'EmployeeId': np.random.randint(1, 100),
@@ -227,26 +301,56 @@ if st.session_state.current_page == 'dashboard':
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.subheader("Total Sales 2025")
-        monthly_sales = df.groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
-        monthly_sales['Month'] = pd.to_datetime(monthly_sales['PurchaseDate'], format='%m').dt.strftime('%b')
         
-        fig = px.line(monthly_sales, x='Month', y='Payment', 
-                     title="Monthly Sales Trend",
+        # Create complete 12-month data
+        all_months = pd.DataFrame({
+            'Month': range(1, 13),
+            'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        })
+        
+        # Get actual sales data grouped by month
+        monthly_sales = df.groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
+        monthly_sales.columns = ['Month', 'Payment']
+        
+        # Merge to ensure all 12 months are represented
+        complete_monthly_sales = all_months.merge(monthly_sales, on='Month', how='left')
+        complete_monthly_sales['Payment'] = complete_monthly_sales['Payment'].fillna(0)
+        
+        fig = px.line(complete_monthly_sales, x='MonthName', y='Payment', 
+                     title="Monthly Sales Trend - Full Year",
                      color_discrete_sequence=['#9467bd'])
-        fig.update_layout(showlegend=False, height=400)
+        fig.update_layout(
+            showlegend=False, 
+            height=400,
+            xaxis_title="Month",
+            yaxis_title="Sales Amount (Rs.)"
+        )
+        fig.update_traces(mode='lines+markers', marker=dict(size=8))
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("Monthly Sales Vehicle")
-        monthly_count = df.groupby(df['PurchaseDate'].dt.month).size().reset_index()
-        monthly_count['Month'] = pd.to_datetime(monthly_count['PurchaseDate'], format='%m').dt.strftime('%b')
+        st.subheader("Monthly Sales Vehicle Count")
         
-        fig = px.bar(monthly_count, x='Month', y=0, 
-                    title="Monthly Vehicle Sales Count",
+        # Get vehicle count by month
+        monthly_count = df.groupby(df['PurchaseDate'].dt.month).size().reset_index()
+        monthly_count.columns = ['Month', 'Count']
+        
+        # Merge with all months
+        complete_monthly_count = all_months.merge(monthly_count, on='Month', how='left')
+        complete_monthly_count['Count'] = complete_monthly_count['Count'].fillna(0)
+        
+        fig = px.bar(complete_monthly_count, x='MonthName', y='Count', 
+                    title="Monthly Vehicle Sales Count - Full Year",
                     color_discrete_sequence=['#ff7f0e'])
-        fig.update_layout(showlegend=False, height=400)
+        fig.update_layout(
+            showlegend=False, 
+            height=400,
+            xaxis_title="Month",
+            yaxis_title="Number of Vehicles Sold"
+        )
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -439,12 +543,8 @@ elif st.session_state.current_page == 'customer_management':
     tab1, tab2, tab3 = st.tabs(["All Customers", "Add Customer", "Update Customer"])
     
     with tab1:
-        # Generate customer data
-        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
-        customers['Phone'] = [f"07{np.random.randint(10000000, 99999999)}" for _ in range(len(customers))]
-        customers['Address'] = [f"Address {i}" for i in customers['CustomerId']]
-        customers['NIC'] = [f"{np.random.randint(100000000, 999999999)}V" for _ in range(len(customers))]
-        
+        # Display customer data with Sri Lankan details
+        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
         st.dataframe(customers, use_container_width=True)
     
     with tab2:
@@ -465,19 +565,24 @@ elif st.session_state.current_page == 'customer_management':
     
     with tab3:
         st.subheader("Update Customer")
-        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
+        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
         customer_to_update = st.selectbox("Select Customer", customers['CustomerName'].tolist())
         
         if customer_to_update:
+            selected_customer = customers[customers['CustomerName'] == customer_to_update].iloc[0]
+            
             col1, col2 = st.columns(2)
             with col1:
-                st.text_input("First Name", value="Sample", key="update_fname")
-                st.text_area("Address", value="Sample Address", key="update_address")
-                st.text_input("NIC Number", value="123456789V", key="update_nic")
+                current_name_parts = selected_customer['CustomerName'].split(' ')
+                first_name = current_name_parts[0] if len(current_name_parts) > 0 else ""
+                st.text_input("First Name", value=first_name, key="update_fname")
+                st.text_area("Address", value=selected_customer['Address'], key="update_address")
+                st.text_input("NIC Number", value=selected_customer['NIC'], key="update_nic")
             
             with col2:
-                st.text_input("Last Name", value="Customer", key="update_lname")
-                st.text_input("Phone Number", value="0771234567", key="update_phone")
+                last_name = " ".join(current_name_parts[1:]) if len(current_name_parts) > 1 else ""
+                st.text_input("Last Name", value=last_name, key="update_lname")
+                st.text_input("Phone Number", value=selected_customer['Phone'], key="update_phone")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -640,28 +745,42 @@ elif st.session_state.current_page == 'sales_reports':
                     title="Sales by Payment Method")
         st.plotly_chart(fig, use_container_width=True)
     
-    # Monthly sales trend
+    # Monthly sales trend with proper 12-month display
     st.subheader("Monthly Sales Trend")
-    monthly_sales = filtered_sales.groupby(filtered_sales['PurchaseDate'].dt.to_period('M')).agg({
+    
+    # Create complete 12-month framework
+    all_months_df = pd.DataFrame({
+        'Month': range(1, 13),
+        'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    })
+    
+    # Get actual monthly sales data
+    monthly_sales = filtered_sales.groupby(filtered_sales['PurchaseDate'].dt.month).agg({
         'Payment': 'sum',
         'VehicleNumber': 'count'
     }).reset_index()
-    monthly_sales['PurchaseDate'] = monthly_sales['PurchaseDate'].astype(str)
+    monthly_sales.columns = ['Month', 'Revenue', 'Count']
+    
+    # Merge with complete 12-month data
+    complete_monthly_sales = all_months_df.merge(monthly_sales, on='Month', how='left')
+    complete_monthly_sales['Revenue'] = complete_monthly_sales['Revenue'].fillna(0)
+    complete_monthly_sales['Count'] = complete_monthly_sales['Count'].fillna(0)
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(
-        go.Bar(x=monthly_sales['PurchaseDate'], y=monthly_sales['Payment'], 
+        go.Bar(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Revenue'], 
                name="Revenue", marker_color='lightblue'),
         secondary_y=False,
     )
     fig.add_trace(
-        go.Scatter(x=monthly_sales['PurchaseDate'], y=monthly_sales['VehicleNumber'], 
+        go.Scatter(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Count'], 
                   name="Count", mode='lines+markers', marker_color='red'),
         secondary_y=True,
     )
     fig.update_yaxes(title_text="Revenue (Rs.)", secondary_y=False)
     fig.update_yaxes(title_text="Number of Sales", secondary_y=True)
-    fig.update_layout(title_text="Monthly Sales Revenue and Count")
+    fig.update_layout(title_text="Monthly Sales Revenue and Count - Full Year")
     
     st.plotly_chart(fig, use_container_width=True)
     
@@ -679,94 +798,3 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-
-# SQL Server Connection Instructions (commented)
-#To connect to Microsoft SQL Server:
-
-#1. Install required packages:
-#  pip install pyodbc
-
-#2. Update the connection string in connect_to_sql_server() function with your SQL Server details:
- #  - Server name/IP
-  # - Database name
-   #- Username and password
-
-#3. Create the required tables in your SQL Server database:
-
-#CREATE TABLE vehicle_sales (
-   # VehicleNumber NVARCHAR(50) PRIMARY KEY,
-    #CustomerId INT,
-    #CustomerName NVARCHAR(100),
-    #VehicleType NVARCHAR(50),
-    #Model NVARCHAR(50),
-    #PurchaseDate DATE,
-    #Payment DECIMAL(10,2),
-    #PaymentMethod NVARCHAR(50),
-    #EmployeeId INT,
-    #Status NVARCHAR(50),
-    #RepairCost DECIMAL(10,2),
-    #RepairStatus NVARCHAR(50)
-#);
-
-#CREATE TABLE customers (
-    #CustomerId INT PRIMARY KEY IDENTITY(1,1),
-    #FirstName NVARCHAR(50),
-    #LastName NVARCHAR(50),
-    #Address NVARCHAR(200),
-    #NIC NVARCHAR(20),
-    #Phone NVARCHAR(20)
-##;
-
-#CREATE TABLE suppliers (
-    #SupplierID INT PRIMARY KEY IDENTITY(1,1),
-    #FirstName NVARCHAR(50),
-    #LastName NVARCHAR(50),
-    #Address NVARCHAR(200),
-    #NIC NVARCHAR(20),
-    #Phone NVARCHAR(20)
-#);
-
-#CREATE TABLE repairs (
-#    RepairID INT PRIMARY KEY IDENTITY(1,1),
- ##  RepairStartDate DATE,
-   # RepairEndDate DATE,
-    #RepairDetails NVARCHAR(500),
-    #Location NVARCHAR(100),
-    #RepairAmount DECIMAL(10,2),
-    #RepairStatus NVARCHAR(50),
-    #FOREIGN KEY (VehicleNumber) REFERENCES vehicle_sales(VehicleNumber)
-#);
-
-#4. Replace load_sample_data() with load_data_from_sql() in the main code
-
-#5. Add insert/update/delete functions for database operations
-
-#Example database operations:
-
-#def insert_vehicle(vehicle_data):
-    #conn = connect_to_sql_server()
-   # if conn:
-       # cursor = conn.cursor()
-       # query = '''INSERT INTO vehicle_sales 
-                  # (VehicleNumber, CustomerId, CustomerName, VehicleType, Model, 
-                   # PurchaseDate, Payment, PaymentMethod, EmployeeId, Status, 
-                   # RepairCost, RepairStatus) 
-                   #VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''
-        #cursor.execute(query, vehicle_data)
-        #conn.commit()
-        #conn.close()
-        #return True
-    #return False
-
-#def update_vehicle(vehicle_number, update_data):
-    #conn = connect_to_sql_server()
-    #if conn:
-        #cursor = conn.cursor()
-        #query = '''UPDATE vehicle_sales SET Status = ?, Payment = ?, 
-                  # CustomerId = ?, EmployeeId = ? WHERE VehicleNumber = ?'''
-        #cursor.execute(query, update_data + [vehicle_number])
-        #conn.commit()
-        #conn.close()
-        #return True
-    #return False
