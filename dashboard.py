@@ -1,512 +1,3 @@
-# Repair Management Page
-elif st.session_state.current_page == 'repair_management':
-    st.title("🔧 Repair Management - Real-Time Updates")
-    
-    tab1, tab2, tab3 = st.tabs(["🔧 Active Repairs", "➕ Add Repair", "📋 Repair History"])
-    
-    with tab1:
-        st.subheader("Active Repairs (Live Data)")
-        
-        # Real-time repair stats
-        col1, col2, col3, col4 = st.columns(4)
-        if len(st.session_state.repairs_data) > 0:
-            active_repairs = st.session_state.repairs_data[st.session_state.repairs_data['Status'].isin(['In Progress', 'Pending'])]
-            completed_repairs = st.session_state.repairs_data[st.session_state.repairs_data['Status'] == 'Completed']
-            
-            with col1:
-                st.metric("Active Repairs", len(active_repairs))
-            with col2:
-                st.metric("Completed This Month", len(completed_repairs))
-            with col3:
-                total_repair_cost = active_repairs['Amount'].sum() if len(active_repairs) > 0 else 0
-                st.metric("Active Repair Value", f"Rs.{total_repair_cost/1000:.0f}k")
-            with col4:
-                avg_repair_time = "5-7 days"  # Sample
-                st.metric("Avg Repair Time", avg_repair_time)
-        else:
-            with col1:
-                st.metric("Active Repairs", 0)
-            with col2:
-                st.metric("Completed This Month", 0)
-            with col3:
-                st.metric("Active Repair Value", "Rs.0k")
-            with col4:
-                st.metric("Avg Repair Time", "N/A")
-        
-        # Filter repairs
-        if len(st.session_state.repairs_data) > 0:
-            repair_status_filter = st.selectbox("Filter by Status", ["All"] + list(st.session_state.repairs_data['Status'].unique()))
-            
-            display_repairs = st.session_state.repairs_data.copy()
-            if repair_status_filter != "All":
-                display_repairs = display_repairs[display_repairs['Status'] == repair_status_filter]
-            
-            st.dataframe(display_repairs, use_container_width=True)
-        else:
-            st.info("No repair records available. Add repairs in the 'Add Repair' tab.")
-            st.dataframe(pd.DataFrame(columns=['RepairID', 'VehicleNumber', 'StartDate', 'EndDate', 'RepairDetails', 'Location', 'Amount', 'Status']), use_container_width=True)
-    
-    with tab2:
-        st.subheader("➕ Add New Repair (Real-Time)")
-        
-        with st.form("add_repair_form", clear_on_submit=True):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                available_vehicles = st.session_state.vehicles_data['VehicleNumber'].tolist()
-                repair_vehicle = st.selectbox("Vehicle Number", available_vehicles)
-                repair_start_date = st.date_input("Repair Start Date", value=datetime.now())
-                repair_details = st.text_area("Repair Details", placeholder="Describe repair work needed...")
-                repair_location = st.selectbox("Location", ['Main Workshop', 'Service Center A', 'Service Center B', 'Mobile Service'])
-            
-            with col2:
-                repair_end_date = st.date_input("Expected End Date", value=datetime.now() + timedelta(days=7))
-                repair_amount = st.number_input("Repair Amount (Rs.)", min_value=0, step=100, value=25000)
-                repair_status = st.selectbox("Initial Status", ['Pending', 'In Progress'])
-                priority = st.selectbox("Priority", ['Low', 'Medium', 'High', 'Urgent'])
-            
-            submitted = st.form_submit_button("🔧 Create Repair Job", type="primary")
-            
-            if submitted and repair_vehicle:
-                # Generate new repair ID
-                new_repair_id = f"REP{str(len(st.session_state.repairs_data) + 1).zfill(3)}"
-                
-                # Add Priority field to repairs data if not exists
-                if 'Priority' not in st.session_state.repairs_data.columns:
-                    st.session_state.repairs_data['Priority'] = 'Medium'
-                
-                new_repair = pd.DataFrame({
-                    'RepairID': [new_repair_id],
-                    'VehicleNumber': [repair_vehicle],
-                    'StartDate': [repair_start_date.strftime('%Y-%m-%d')],
-                    'EndDate': [repair_end_date.strftime('%Y-%m-%d')],
-                    'RepairDetails': [repair_details],
-                    'Location': [repair_location],
-                    'Amount': [repair_amount],
-                    'Status': [repair_status],
-                    'Priority': [priority]
-                })
-                
-                st.session_state.repairs_data = pd.concat([st.session_state.repairs_data, new_repair], ignore_index=True)
-                
-                # Update vehicle status if needed
-                if repair_status == 'In Progress':
-                    mask = st.session_state.vehicles_data['VehicleNumber'] == repair_vehicle
-                    st.session_state.vehicles_data.loc[mask, 'Status'] = 'Under Repair'
-                    st.session_state.vehicles_data.loc[mask, 'RepairCost'] = repair_amount
-                    st.session_state.vehicles_data.loc[mask, 'RepairStatus'] = repair_status
-                
-                st.success(f"🔧 Repair job {new_repair_id} created for vehicle {repair_vehicle}!")
-                st.rerun()
-    
-    with tab3:
-        st.subheader("📋 Repair History & Management")
-        
-        if len(st.session_state.repairs_data) > 0:
-            # Update repair status
-    with tab3:
-        st.subheader("📋 Repair History & Management")
-        
-        if len(st.session_state.repairs_data) > 0:
-            # Update repair status
-            st.subheader("🔄 Update Repair Status")
-            
-            with st.form("update_repair_form"):
-                repair_options = [f"{row['RepairID']} - {row['VehicleNumber']} ({row['Status']})" for _, row in st.session_state.repairs_data.iterrows()]
-                
-                if repair_options:
-                    repair_to_update = st.selectbox("Select Repair Job", repair_options)
-                    
-                    repair_id = repair_to_update.split(" - ")[0]
-                    selected_repair = st.session_state.repairs_data[st.session_state.repairs_data['RepairID'] == repair_id].iloc[0]
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        new_status = st.selectbox("New Status", ['Pending', 'In Progress', 'Completed', 'Cancelled'],
-                                                index=['Pending', 'In Progress', 'Completed', 'Cancelled'].index(selected_repair['Status']))
-                        new_amount = st.number_input("Final Amount", value=float(selected_repair['Amount']))
-                    
-                    with col2:
-                        completion_notes = st.text_area("Completion Notes", placeholder="Add any notes about the repair...")
-                        new_end_date = st.date_input("Actual End Date", value=datetime.now())
-                    
-                    update_submitted = st.form_submit_button("🔄 Update Repair", type="primary")
-                    
-                    if update_submitted:
-                        # Update repair data
-                        mask = st.session_state.repairs_data['RepairID'] == repair_id
-                        st.session_state.repairs_data.loc[mask, 'Status'] = new_status
-                        st.session_state.repairs_data.loc[mask, 'Amount'] = new_amount
-                        st.session_state.repairs_data.loc[mask, 'EndDate'] = new_end_date.strftime('%Y-%m-%d')
-                        
-                        # Update vehicle status based on repair completion
-                        vehicle_number = selected_repair['VehicleNumber']
-                        vehicle_mask = st.session_state.vehicles_data['VehicleNumber'] == vehicle_number
-                        
-                        if new_status == 'Completed':
-                            st.session_state.vehicles_data.loc[vehicle_mask, 'Status'] = 'Available'
-                            st.session_state.vehicles_data.loc[vehicle_mask, 'RepairStatus'] = 'Completed'
-                        elif new_status == 'In Progress':
-                            st.session_state.vehicles_data.loc[vehicle_mask, 'Status'] = 'Under Repair'
-                            st.session_state.vehicles_data.loc[vehicle_mask, 'RepairStatus'] = 'In Progress'
-                        
-                        st.session_state.vehicles_data.loc[vehicle_mask, 'RepairCost'] = new_amount
-                        
-                        st.success(f"✅ Repair {repair_id} updated to {new_status}!")
-                        if new_status == 'Completed':
-                            st.balloons()
-                        st.rerun()
-                else:
-                    st.info("No repair jobs available to update")
-            
-            # Display all repair history
-            st.subheader("📋 All Repair Records")
-            st.dataframe(st.session_state.repairs_data, use_container_width=True)
-        else:
-            st.info("No repair records available. Add repairs in the 'Add Repair' tab.")
-
-# Supplier Management Page
-elif st.session_state.current_page == 'supplier_management':
-    st.title("🏪 Supplier Management - Real-Time Updates")
-    
-    tab1, tab2, tab3 = st.tabs(["📋 All Suppliers", "➕ Add Supplier", "✏️ Update Supplier"])
-    
-    with tab1:
-        st.subheader("All Suppliers (Live Data)")
-        
-        # Real-time supplier stats
-        col1, col2, col3, col4 = st.columns(4)
-        active_suppliers = st.session_state.suppliers_data[st.session_state.suppliers_data['Status'] == 'Active']
-        
-        with col1:
-            st.metric("Total Suppliers", len(st.session_state.suppliers_data))
-        with col2:
-            st.metric("Active Suppliers", len(active_suppliers))
-        with col3:
-            avg_rating = st.session_state.suppliers_data['Rating'].mean()
-            st.metric("Average Rating", f"{avg_rating:.1f}⭐")
-        with col4:
-            total_orders = st.session_state.suppliers_data['TotalOrders'].sum()
-            st.metric("Total Orders", total_orders)
-        
-        # Filters
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            supplier_type_filter = st.selectbox("Filter by Type", ["All"] + list(st.session_state.suppliers_data['SupplierType'].unique()))
-        with col2:
-            status_filter = st.selectbox("Filter by Status", ["All"] + list(st.session_state.suppliers_data['Status'].unique()))
-        with col3:
-            rating_filter = st.selectbox("Min Rating", ["All", "4.0+", "4.5+", "4.8+"])
-        
-        # Apply filters
-        display_suppliers = st.session_state.suppliers_data.copy()
-        if supplier_type_filter != "All":
-            display_suppliers = display_suppliers[display_suppliers['SupplierType'] == supplier_type_filter]
-        if status_filter != "All":
-            display_suppliers = display_suppliers[display_suppliers['Status'] == status_filter]
-        if rating_filter != "All":
-            min_rating = float(rating_filter.replace("+", ""))
-            display_suppliers = display_suppliers[display_suppliers['Rating'] >= min_rating]
-        
-        st.dataframe(display_suppliers, use_container_width=True)
-        
-        # Top performing suppliers
-        if len(display_suppliers) > 0:
-            st.subheader("🏆 Top Performing Suppliers")
-            top_suppliers = display_suppliers.nlargest(3, 'Rating')[['CompanyName', 'Rating', 'TotalOrders', 'SupplierType']]
-            
-            col1, col2, col3 = st.columns(3)
-            for i, (_, supplier) in enumerate(top_suppliers.iterrows()):
-                with [col1, col2, col3][i]:
-                    st.success(f"🥇 **{supplier['CompanyName']}**")
-                    st.write(f"Rating: {supplier['Rating']}⭐")
-                    st.write(f"Orders: {supplier['TotalOrders']}")
-                    st.write(f"Type: {supplier['SupplierType']}")
-    
-    with tab2:
-        st.subheader("➕ Add New Supplier (Real-Time)")
-        
-        with st.form("add_supplier_form", clear_on_submit=True):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                company_name = st.text_input("Company Name", placeholder="e.g., ABC Motors (Pvt) Ltd")
-                contact_person = st.text_input("Contact Person")
-                supplier_type = st.selectbox("Supplier Type", 
-                                           ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider', 'Logistics Partner'])
-                
-                # Address components
-                address_number = st.text_input("Address Number", placeholder="e.g., 123/45")
-                street = st.selectbox("Street", ['Galle Road', 'Kandy Road', 'Negombo Road', 'Baseline Road', 'Duplication Road', 'Main Street'])
-                city = st.selectbox("City", ['Colombo 03', 'Colombo 04', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Kandy', 'Galle', 'Negombo', 'Kurunegala'])
-            
-            with col2:
-                phone_number = st.text_input("Phone Number", placeholder="011XXXXXXX")
-                email_address = st.text_input("Email Address", placeholder="info@company.lk")
-                rating = st.selectbox("Initial Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5])
-                initial_orders = st.number_input("Initial Order Count", min_value=0, max_value=100, value=0)
-                status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'])
-            
-            submitted = st.form_submit_button("🚀 Add Supplier", type="primary")
-            
-            if submitted and company_name:
-                # Generate new supplier ID
-                new_supplier_id = f"SUP{str(len(st.session_state.suppliers_data) + 1).zfill(3)}"
-                
-                # Combine address
-                full_address = f"{address_number}, {street}, {city}"
-                
-                # Add new supplier
-                new_supplier = pd.DataFrame({
-                    'SupplierID': [new_supplier_id],
-                    'CompanyName': [company_name],
-                    'ContactPerson': [contact_person],
-                    'SupplierType': [supplier_type],
-                    'Address': [full_address],
-                    'Phone': [phone_number],
-                    'Email': [email_address],
-                    'Rating': [rating],
-                    'LastDelivery': [datetime.now().strftime('%Y-%m-%d')],
-                    'TotalOrders': [initial_orders],
-                    'Status': [status]
-                })
-                
-                st.session_state.suppliers_data = pd.concat([st.session_state.suppliers_data, new_supplier], ignore_index=True)
-                
-                st.success(f"✅ Supplier {company_name} added successfully! ID: {new_supplier_id}")
-                st.balloons()
-                st.rerun()
-    
-    with tab3:
-        st.subheader("✏️ Update Supplier (Real-Time)")
-        
-        if len(st.session_state.suppliers_data) > 0:
-            supplier_to_update = st.selectbox("Select Supplier", 
-                                            [f"{row['CompanyName']} ({row['SupplierID']})" for _, row in st.session_state.suppliers_data.iterrows()])
-            
-            if supplier_to_update:
-                # Extract supplier ID
-                supplier_id = supplier_to_update.split("(")[1].replace(")", "")
-                selected_supplier = st.session_state.suppliers_data[st.session_state.suppliers_data['SupplierID'] == supplier_id].iloc[0]
-                
-                with st.form("update_supplier_form"):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        new_company_name = st.text_input("Company Name", value=selected_supplier['CompanyName'])
-                        new_contact_person = st.text_input("Contact Person", value=selected_supplier['ContactPerson'])
-                        new_supplier_type = st.selectbox("Supplier Type", 
-                                                       ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'],
-                                                       index=['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'].index(selected_supplier['SupplierType']))
-                        new_address = st.text_area("Address", value=selected_supplier['Address'])
-                    
-                    with col2:
-                        new_phone = st.text_input("Phone Number", value=selected_supplier['Phone'])
-                        new_email = st.text_input("Email", value=selected_supplier['Email'])
-                        new_rating = st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5],
-                                                 index=[5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5].index(selected_supplier['Rating']))
-                        new_status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'],
-                                                 index=['Active', 'Pending', 'Suspended'].index(selected_supplier['Status']))
-                        
-                        # Update orders
-                        new_total_orders = st.number_input("Total Orders", value=int(selected_supplier['TotalOrders']), min_value=0)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        delete_submitted = st.form_submit_button("🗑️ Delete Supplier", type="secondary")
-                    with col2:
-                        update_submitted = st.form_submit_button("🔄 Update Supplier", type="primary")
-                    
-                    if update_submitted:
-                        # Update supplier data
-                        mask = st.session_state.suppliers_data['SupplierID'] == supplier_id
-                        st.session_state.suppliers_data.loc[mask, 'CompanyName'] = new_company_name
-                        st.session_state.suppliers_data.loc[mask, 'ContactPerson'] = new_contact_person
-                        st.session_state.suppliers_data.loc[mask, 'SupplierType'] = new_supplier_type
-                        st.session_state.suppliers_data.loc[mask, 'Address'] = new_address
-                        st.session_state.suppliers_data.loc[mask, 'Phone'] = new_phone
-                        st.session_state.suppliers_data.loc[mask, 'Email'] = new_email
-                        st.session_state.suppliers_data.loc[mask, 'Rating'] = new_rating
-                        st.session_state.suppliers_data.loc[mask, 'Status'] = new_status
-                        st.session_state.suppliers_data.loc[mask, 'TotalOrders'] = new_total_orders
-                        st.session_state.suppliers_data.loc[mask, 'LastDelivery'] = datetime.now().strftime('%Y-%m-%d')
-                        
-                        st.success(f"✅ Supplier {new_company_name} updated successfully!")
-                        st.rerun()
-                    
-                    if delete_submitted:
-                        # Remove supplier
-                        st.session_state.suppliers_data = st.session_state.suppliers_data[st.session_state.suppliers_data['SupplierID'] != supplier_id]
-                        
-                        st.warning(f"🗑️ Supplier {selected_supplier['CompanyName']} deleted!")
-                        st.rerun()
-        else:
-            st.info("No suppliers available to update")
-
-# Sales Reports Page
-elif st.session_state.current_page == 'sales_reports':
-    st.title("💰 Sales Reports & Analytics - Real-Time Data")
-    
-    # Use real-time data
-    current_data = st.session_state.vehicles_data.copy()
-    
-    # Date range selector
-    col1, col2 = st.columns(2)
-    with col1:
-        start_date = st.date_input("Start Date", value=datetime.now() - timedelta(days=365))
-    with col2:
-        end_date = st.date_input("End Date", value=datetime.now())
-    
-    # Filter data by date range
-    filtered_sales = current_data[(current_data['PurchaseDate'].dt.date >= start_date) & 
-                                 (current_data['PurchaseDate'].dt.date <= end_date) & 
-                                 (current_data['Status'] == 'Sold')]
-    
-    # Real-time key metrics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    # Calculate metrics safely
-    avg_sale = filtered_sales['Payment'].mean() if len(filtered_sales) > 0 else 0
-    original_sales_count = len(df[df['Status'] == 'Sold']) if 'df' in locals() else 0
-    sales_delta = len(filtered_sales) - original_sales_count
-    
-    with col1:
-        st.metric("Total Sales", len(filtered_sales), delta=f"+{max(0, sales_delta)}")
-    with col2:
-        total_revenue = filtered_sales['Payment'].sum()
-        st.metric("Total Revenue", f"Rs.{total_revenue/1000000:.2f}M", delta="+12%")
-    with col3:
-        st.metric("Average Sale", f"Rs.{avg_sale:.0f}", delta="+8%")
-    with col4:
-        top_model = filtered_sales['Model'].mode().iloc[0] if len(filtered_sales) > 0 else "N/A"
-        st.metric("Top Model", top_model)
-    
-    # Real-time charts
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Sales by Model (Real-time)
-        st.subheader("Sales by Model (Live Data)")
-        if len(filtered_sales) > 0:
-            model_sales = filtered_sales['Model'].value_counts()
-            fig = px.pie(values=model_sales.values, names=model_sales.index, 
-                        title="Sales Distribution by Model")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No sales data for selected period")
-    
-    with col2:
-        # Sales by Payment Method (Real-time)
-        st.subheader("Sales by Payment Method (Live Data)")
-        if len(filtered_sales) > 0:
-            payment_sales = filtered_sales['PaymentMethod'].value_counts()
-            fig = px.bar(x=payment_sales.index, y=payment_sales.values,
-                        title="Sales by Payment Method")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No payment data for selected period")
-    
-    # Monthly sales trend with proper 12-month display (Real-time)
-    st.subheader("Monthly Sales Trend (Real-Time Data)")
-    
-    # Create complete 12-month framework
-    all_months_df = pd.DataFrame({
-        'Month': range(1, 13),
-        'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    })
-    
-    # Get actual monthly sales data from real-time data
-    if len(filtered_sales) > 0:
-        monthly_sales = filtered_sales.groupby(filtered_sales['PurchaseDate'].dt.month).agg({
-            'Payment': 'sum',
-            'VehicleNumber': 'count'
-        }).reset_index()
-        monthly_sales.columns = ['Month', 'Revenue', 'Count']
-        
-        # Merge with complete 12-month data
-        complete_monthly_sales = all_months_df.merge(monthly_sales, on='Month', how='left')
-        complete_monthly_sales['Revenue'] = complete_monthly_sales['Revenue'].fillna(0)
-        complete_monthly_sales['Count'] = complete_monthly_sales['Count'].fillna(0)
-        
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        fig.add_trace(
-            go.Bar(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Revenue'], 
-                   name="Revenue", marker_color='lightblue'),
-            secondary_y=False,
-        )
-        fig.add_trace(
-            go.Scatter(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Count'], 
-                      name="Count", mode='lines+markers', marker_color='red'),
-            secondary_y=True,
-        )
-        fig.update_yaxes(title_text="Revenue (Rs.)", secondary_y=False)
-        fig.update_yaxes(title_text="Number of Sales", secondary_y=True)
-        fig.update_layout(title_text="Monthly Sales Revenue and Count - Full Year (Real-Time)")
-        
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No sales data available for monthly trend analysis")
-    
-    # Real-time detailed sales table
-    st.subheader("Detailed Sales Data (Real-Time)")
-    if len(filtered_sales) > 0:
-        # Add action buttons for real-time operations
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("📊 Export to CSV"):
-                csv = filtered_sales.to_csv(index=False)
-                st.download_button("Download CSV", csv, "sales_report.csv", "text/csv")
-        with col2:
-            if st.button("🔄 Refresh Data"):
-                st.rerun()
-        with col3:
-            st.info(f"Last Updated: {datetime.now().strftime('%H:%M:%S')}")
-        
-        st.dataframe(filtered_sales, use_container_width=True)
-        
-        # Real-time sales summary
-        st.subheader("📈 Real-Time Sales Summary")
-        
-        if len(filtered_sales) > 0:
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.success("🚗 **Vehicle Types Sold**")
-                vehicle_type_counts = filtered_sales['VehicleType'].value_counts()
-                for vehicle_type, count in vehicle_type_counts.items():
-                    st.write(f"• {vehicle_type}: {count} units")
-            
-            with col2:
-                st.info("💳 **Payment Methods Used**")
-                payment_counts = filtered_sales['PaymentMethod'].value_counts()
-                for method, count in payment_counts.items():
-                    st.write(f"• {method}: {count} sales")
-            
-            with col3:
-                st.warning("📅 **Recent Activity**")
-                recent_sales = filtered_sales.nlargest(3, 'PurchaseDate')[['VehicleNumber', 'CustomerName', 'Payment']]
-                for _, sale in recent_sales.iterrows():
-                    st.write(f"• {sale['VehicleNumber']}: Rs.{sale['Payment']/1000:.0f}k")
-        else:
-            st.info("No sales summary available - no sales in selected period")
-    else:
-        st.info("No sales data available for the selected date range")
-
-# Footer
-st.markdown("""
-<div style="text-align: center; color: #ecf0f1; padding: 2rem; background: linear-gradient(to bottom, #0d0f14, #000000); border-radius: 15px; margin: 2rem 0;">
-    <h3>🚗 CM Vehicle Management System</h3>
-    <p><strong>Real-Time Vehicle Sales & Management Dashboard</strong></p>
-    <p>Built with Group AT | © 2025 CM Vehicle Management. All rights reserved.</p>
-    <p style="font-size: 0.9rem; opacity: 0.8;">
-        📧 Email: chamod@cmvehicles.com | 📞 Phone: +94 70 520 6400 
-    </p>
-    <p style="font-size: 0.8rem; opacity: 0.6;">
-        ⚡ Real-Time Updates Enabled | 🔄 Data Synced: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    </p>
-</div>
-""".format(datetime=datetime), unsafe_allow_html=True)import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -1412,5 +903,513 @@ elif st.session_state.current_page == 'customer_management':
                         st.rerun()
         else:
             st.info("No customers available to update")
+            # Repair Management Page
+elif st.session_state.current_page == 'repair_management':
+    st.title("🔧 Repair Management - Real-Time Updates")
+    
+    tab1, tab2, tab3 = st.tabs(["🔧 Active Repairs", "➕ Add Repair", "📋 Repair History"])
+    
+    with tab1:
+        st.subheader("Active Repairs (Live Data)")
+        
+        # Real-time repair stats
+        col1, col2, col3, col4 = st.columns(4)
+        if len(st.session_state.repairs_data) > 0:
+            active_repairs = st.session_state.repairs_data[st.session_state.repairs_data['Status'].isin(['In Progress', 'Pending'])]
+            completed_repairs = st.session_state.repairs_data[st.session_state.repairs_data['Status'] == 'Completed']
+            
+            with col1:
+                st.metric("Active Repairs", len(active_repairs))
+            with col2:
+                st.metric("Completed This Month", len(completed_repairs))
+            with col3:
+                total_repair_cost = active_repairs['Amount'].sum() if len(active_repairs) > 0 else 0
+                st.metric("Active Repair Value", f"Rs.{total_repair_cost/1000:.0f}k")
+            with col4:
+                avg_repair_time = "5-7 days"  # Sample
+                st.metric("Avg Repair Time", avg_repair_time)
+        else:
+            with col1:
+                st.metric("Active Repairs", 0)
+            with col2:
+                st.metric("Completed This Month", 0)
+            with col3:
+                st.metric("Active Repair Value", "Rs.0k")
+            with col4:
+                st.metric("Avg Repair Time", "N/A")
+        
+        # Filter repairs
+        if len(st.session_state.repairs_data) > 0:
+            repair_status_filter = st.selectbox("Filter by Status", ["All"] + list(st.session_state.repairs_data['Status'].unique()))
+            
+            display_repairs = st.session_state.repairs_data.copy()
+            if repair_status_filter != "All":
+                display_repairs = display_repairs[display_repairs['Status'] == repair_status_filter]
+            
+            st.dataframe(display_repairs, use_container_width=True)
+        else:
+            st.info("No repair records available. Add repairs in the 'Add Repair' tab.")
+            st.dataframe(pd.DataFrame(columns=['RepairID', 'VehicleNumber', 'StartDate', 'EndDate', 'RepairDetails', 'Location', 'Amount', 'Status']), use_container_width=True)
+    
+    with tab2:
+        st.subheader("➕ Add New Repair (Real-Time)")
+        
+        with st.form("add_repair_form", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                available_vehicles = st.session_state.vehicles_data['VehicleNumber'].tolist()
+                repair_vehicle = st.selectbox("Vehicle Number", available_vehicles)
+                repair_start_date = st.date_input("Repair Start Date", value=datetime.now())
+                repair_details = st.text_area("Repair Details", placeholder="Describe repair work needed...")
+                repair_location = st.selectbox("Location", ['Main Workshop', 'Service Center A', 'Service Center B', 'Mobile Service'])
+            
+            with col2:
+                repair_end_date = st.date_input("Expected End Date", value=datetime.now() + timedelta(days=7))
+                repair_amount = st.number_input("Repair Amount (Rs.)", min_value=0, step=100, value=25000)
+                repair_status = st.selectbox("Initial Status", ['Pending', 'In Progress'])
+                priority = st.selectbox("Priority", ['Low', 'Medium', 'High', 'Urgent'])
+            
+            submitted = st.form_submit_button("🔧 Create Repair Job", type="primary")
+            
+            if submitted and repair_vehicle:
+                # Generate new repair ID
+                new_repair_id = f"REP{str(len(st.session_state.repairs_data) + 1).zfill(3)}"
+                
+                # Add Priority field to repairs data if not exists
+                if 'Priority' not in st.session_state.repairs_data.columns:
+                    st.session_state.repairs_data['Priority'] = 'Medium'
+                
+                new_repair = pd.DataFrame({
+                    'RepairID': [new_repair_id],
+                    'VehicleNumber': [repair_vehicle],
+                    'StartDate': [repair_start_date.strftime('%Y-%m-%d')],
+                    'EndDate': [repair_end_date.strftime('%Y-%m-%d')],
+                    'RepairDetails': [repair_details],
+                    'Location': [repair_location],
+                    'Amount': [repair_amount],
+                    'Status': [repair_status],
+                    'Priority': [priority]
+                })
+                
+                st.session_state.repairs_data = pd.concat([st.session_state.repairs_data, new_repair], ignore_index=True)
+                
+                # Update vehicle status if needed
+                if repair_status == 'In Progress':
+                    mask = st.session_state.vehicles_data['VehicleNumber'] == repair_vehicle
+                    st.session_state.vehicles_data.loc[mask, 'Status'] = 'Under Repair'
+                    st.session_state.vehicles_data.loc[mask, 'RepairCost'] = repair_amount
+                    st.session_state.vehicles_data.loc[mask, 'RepairStatus'] = repair_status
+                
+                st.success(f"🔧 Repair job {new_repair_id} created for vehicle {repair_vehicle}!")
+                st.rerun()
+    
+    with tab3:
+        st.subheader("📋 Repair History & Management")
+        
+        if len(st.session_state.repairs_data) > 0:
+            # Update repair status
+    with tab3:
+        st.subheader("📋 Repair History & Management")
+        
+        if len(st.session_state.repairs_data) > 0:
+            # Update repair status
+            st.subheader("🔄 Update Repair Status")
+            
+            with st.form("update_repair_form"):
+                repair_options = [f"{row['RepairID']} - {row['VehicleNumber']} ({row['Status']})" for _, row in st.session_state.repairs_data.iterrows()]
+                
+                if repair_options:
+                    repair_to_update = st.selectbox("Select Repair Job", repair_options)
+                    
+                    repair_id = repair_to_update.split(" - ")[0]
+                    selected_repair = st.session_state.repairs_data[st.session_state.repairs_data['RepairID'] == repair_id].iloc[0]
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        new_status = st.selectbox("New Status", ['Pending', 'In Progress', 'Completed', 'Cancelled'],
+                                                index=['Pending', 'In Progress', 'Completed', 'Cancelled'].index(selected_repair['Status']))
+                        new_amount = st.number_input("Final Amount", value=float(selected_repair['Amount']))
+                    
+                    with col2:
+                        completion_notes = st.text_area("Completion Notes", placeholder="Add any notes about the repair...")
+                        new_end_date = st.date_input("Actual End Date", value=datetime.now())
+                    
+                    update_submitted = st.form_submit_button("🔄 Update Repair", type="primary")
+                    
+                    if update_submitted:
+                        # Update repair data
+                        mask = st.session_state.repairs_data['RepairID'] == repair_id
+                        st.session_state.repairs_data.loc[mask, 'Status'] = new_status
+                        st.session_state.repairs_data.loc[mask, 'Amount'] = new_amount
+                        st.session_state.repairs_data.loc[mask, 'EndDate'] = new_end_date.strftime('%Y-%m-%d')
+                        
+                        # Update vehicle status based on repair completion
+                        vehicle_number = selected_repair['VehicleNumber']
+                        vehicle_mask = st.session_state.vehicles_data['VehicleNumber'] == vehicle_number
+                        
+                        if new_status == 'Completed':
+                            st.session_state.vehicles_data.loc[vehicle_mask, 'Status'] = 'Available'
+                            st.session_state.vehicles_data.loc[vehicle_mask, 'RepairStatus'] = 'Completed'
+                        elif new_status == 'In Progress':
+                            st.session_state.vehicles_data.loc[vehicle_mask, 'Status'] = 'Under Repair'
+                            st.session_state.vehicles_data.loc[vehicle_mask, 'RepairStatus'] = 'In Progress'
+                        
+                        st.session_state.vehicles_data.loc[vehicle_mask, 'RepairCost'] = new_amount
+                        
+                        st.success(f"✅ Repair {repair_id} updated to {new_status}!")
+                        if new_status == 'Completed':
+                            st.balloons()
+                        st.rerun()
+                else:
+                    st.info("No repair jobs available to update")
+            
+            # Display all repair history
+            st.subheader("📋 All Repair Records")
+            st.dataframe(st.session_state.repairs_data, use_container_width=True)
+        else:
+            st.info("No repair records available. Add repairs in the 'Add Repair' tab.")
+
+# Supplier Management Page
+elif st.session_state.current_page == 'supplier_management':
+    st.title("🏪 Supplier Management - Real-Time Updates")
+    
+    tab1, tab2, tab3 = st.tabs(["📋 All Suppliers", "➕ Add Supplier", "✏️ Update Supplier"])
+    
+    with tab1:
+        st.subheader("All Suppliers (Live Data)")
+        
+        # Real-time supplier stats
+        col1, col2, col3, col4 = st.columns(4)
+        active_suppliers = st.session_state.suppliers_data[st.session_state.suppliers_data['Status'] == 'Active']
+        
+        with col1:
+            st.metric("Total Suppliers", len(st.session_state.suppliers_data))
+        with col2:
+            st.metric("Active Suppliers", len(active_suppliers))
+        with col3:
+            avg_rating = st.session_state.suppliers_data['Rating'].mean()
+            st.metric("Average Rating", f"{avg_rating:.1f}⭐")
+        with col4:
+            total_orders = st.session_state.suppliers_data['TotalOrders'].sum()
+            st.metric("Total Orders", total_orders)
+        
+        # Filters
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            supplier_type_filter = st.selectbox("Filter by Type", ["All"] + list(st.session_state.suppliers_data['SupplierType'].unique()))
+        with col2:
+            status_filter = st.selectbox("Filter by Status", ["All"] + list(st.session_state.suppliers_data['Status'].unique()))
+        with col3:
+            rating_filter = st.selectbox("Min Rating", ["All", "4.0+", "4.5+", "4.8+"])
+        
+        # Apply filters
+        display_suppliers = st.session_state.suppliers_data.copy()
+        if supplier_type_filter != "All":
+            display_suppliers = display_suppliers[display_suppliers['SupplierType'] == supplier_type_filter]
+        if status_filter != "All":
+            display_suppliers = display_suppliers[display_suppliers['Status'] == status_filter]
+        if rating_filter != "All":
+            min_rating = float(rating_filter.replace("+", ""))
+            display_suppliers = display_suppliers[display_suppliers['Rating'] >= min_rating]
+        
+        st.dataframe(display_suppliers, use_container_width=True)
+        
+        # Top performing suppliers
+        if len(display_suppliers) > 0:
+            st.subheader("🏆 Top Performing Suppliers")
+            top_suppliers = display_suppliers.nlargest(3, 'Rating')[['CompanyName', 'Rating', 'TotalOrders', 'SupplierType']]
+            
+            col1, col2, col3 = st.columns(3)
+            for i, (_, supplier) in enumerate(top_suppliers.iterrows()):
+                with [col1, col2, col3][i]:
+                    st.success(f"🥇 **{supplier['CompanyName']}**")
+                    st.write(f"Rating: {supplier['Rating']}⭐")
+                    st.write(f"Orders: {supplier['TotalOrders']}")
+                    st.write(f"Type: {supplier['SupplierType']}")
+    
+    with tab2:
+        st.subheader("➕ Add New Supplier (Real-Time)")
+        
+        with st.form("add_supplier_form", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                company_name = st.text_input("Company Name", placeholder="e.g., ABC Motors (Pvt) Ltd")
+                contact_person = st.text_input("Contact Person")
+                supplier_type = st.selectbox("Supplier Type", 
+                                           ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider', 'Logistics Partner'])
+                
+                # Address components
+                address_number = st.text_input("Address Number", placeholder="e.g., 123/45")
+                street = st.selectbox("Street", ['Galle Road', 'Kandy Road', 'Negombo Road', 'Baseline Road', 'Duplication Road', 'Main Street'])
+                city = st.selectbox("City", ['Colombo 03', 'Colombo 04', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Kandy', 'Galle', 'Negombo', 'Kurunegala'])
+            
+            with col2:
+                phone_number = st.text_input("Phone Number", placeholder="011XXXXXXX")
+                email_address = st.text_input("Email Address", placeholder="info@company.lk")
+                rating = st.selectbox("Initial Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5])
+                initial_orders = st.number_input("Initial Order Count", min_value=0, max_value=100, value=0)
+                status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'])
+            
+            submitted = st.form_submit_button("🚀 Add Supplier", type="primary")
+            
+            if submitted and company_name:
+                # Generate new supplier ID
+                new_supplier_id = f"SUP{str(len(st.session_state.suppliers_data) + 1).zfill(3)}"
+                
+                # Combine address
+                full_address = f"{address_number}, {street}, {city}"
+                
+                # Add new supplier
+                new_supplier = pd.DataFrame({
+                    'SupplierID': [new_supplier_id],
+                    'CompanyName': [company_name],
+                    'ContactPerson': [contact_person],
+                    'SupplierType': [supplier_type],
+                    'Address': [full_address],
+                    'Phone': [phone_number],
+                    'Email': [email_address],
+                    'Rating': [rating],
+                    'LastDelivery': [datetime.now().strftime('%Y-%m-%d')],
+                    'TotalOrders': [initial_orders],
+                    'Status': [status]
+                })
+                
+                st.session_state.suppliers_data = pd.concat([st.session_state.suppliers_data, new_supplier], ignore_index=True)
+                
+                st.success(f"✅ Supplier {company_name} added successfully! ID: {new_supplier_id}")
+                st.balloons()
+                st.rerun()
+    
+    with tab3:
+        st.subheader("✏️ Update Supplier (Real-Time)")
+        
+        if len(st.session_state.suppliers_data) > 0:
+            supplier_to_update = st.selectbox("Select Supplier", 
+                                            [f"{row['CompanyName']} ({row['SupplierID']})" for _, row in st.session_state.suppliers_data.iterrows()])
+            
+            if supplier_to_update:
+                # Extract supplier ID
+                supplier_id = supplier_to_update.split("(")[1].replace(")", "")
+                selected_supplier = st.session_state.suppliers_data[st.session_state.suppliers_data['SupplierID'] == supplier_id].iloc[0]
+                
+                with st.form("update_supplier_form"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        new_company_name = st.text_input("Company Name", value=selected_supplier['CompanyName'])
+                        new_contact_person = st.text_input("Contact Person", value=selected_supplier['ContactPerson'])
+                        new_supplier_type = st.selectbox("Supplier Type", 
+                                                       ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'],
+                                                       index=['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'].index(selected_supplier['SupplierType']))
+                        new_address = st.text_area("Address", value=selected_supplier['Address'])
+                    
+                    with col2:
+                        new_phone = st.text_input("Phone Number", value=selected_supplier['Phone'])
+                        new_email = st.text_input("Email", value=selected_supplier['Email'])
+                        new_rating = st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5],
+                                                 index=[5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5].index(selected_supplier['Rating']))
+                        new_status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'],
+                                                 index=['Active', 'Pending', 'Suspended'].index(selected_supplier['Status']))
+                        
+                        # Update orders
+                        new_total_orders = st.number_input("Total Orders", value=int(selected_supplier['TotalOrders']), min_value=0)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        delete_submitted = st.form_submit_button("🗑️ Delete Supplier", type="secondary")
+                    with col2:
+                        update_submitted = st.form_submit_button("🔄 Update Supplier", type="primary")
+                    
+                    if update_submitted:
+                        # Update supplier data
+                        mask = st.session_state.suppliers_data['SupplierID'] == supplier_id
+                        st.session_state.suppliers_data.loc[mask, 'CompanyName'] = new_company_name
+                        st.session_state.suppliers_data.loc[mask, 'ContactPerson'] = new_contact_person
+                        st.session_state.suppliers_data.loc[mask, 'SupplierType'] = new_supplier_type
+                        st.session_state.suppliers_data.loc[mask, 'Address'] = new_address
+                        st.session_state.suppliers_data.loc[mask, 'Phone'] = new_phone
+                        st.session_state.suppliers_data.loc[mask, 'Email'] = new_email
+                        st.session_state.suppliers_data.loc[mask, 'Rating'] = new_rating
+                        st.session_state.suppliers_data.loc[mask, 'Status'] = new_status
+                        st.session_state.suppliers_data.loc[mask, 'TotalOrders'] = new_total_orders
+                        st.session_state.suppliers_data.loc[mask, 'LastDelivery'] = datetime.now().strftime('%Y-%m-%d')
+                        
+                        st.success(f"✅ Supplier {new_company_name} updated successfully!")
+                        st.rerun()
+                    
+                    if delete_submitted:
+                        # Remove supplier
+                        st.session_state.suppliers_data = st.session_state.suppliers_data[st.session_state.suppliers_data['SupplierID'] != supplier_id]
+                        
+                        st.warning(f"🗑️ Supplier {selected_supplier['CompanyName']} deleted!")
+                        st.rerun()
+        else:
+            st.info("No suppliers available to update")
+
+# Sales Reports Page
+elif st.session_state.current_page == 'sales_reports':
+    st.title("💰 Sales Reports & Analytics - Real-Time Data")
+    
+    # Use real-time data
+    current_data = st.session_state.vehicles_data.copy()
+    
+    # Date range selector
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("Start Date", value=datetime.now() - timedelta(days=365))
+    with col2:
+        end_date = st.date_input("End Date", value=datetime.now())
+    
+    # Filter data by date range
+    filtered_sales = current_data[(current_data['PurchaseDate'].dt.date >= start_date) & 
+                                 (current_data['PurchaseDate'].dt.date <= end_date) & 
+                                 (current_data['Status'] == 'Sold')]
+    
+    # Real-time key metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    # Calculate metrics safely
+    avg_sale = filtered_sales['Payment'].mean() if len(filtered_sales) > 0 else 0
+    original_sales_count = len(df[df['Status'] == 'Sold']) if 'df' in locals() else 0
+    sales_delta = len(filtered_sales) - original_sales_count
+    
+    with col1:
+        st.metric("Total Sales", len(filtered_sales), delta=f"+{max(0, sales_delta)}")
+    with col2:
+        total_revenue = filtered_sales['Payment'].sum()
+        st.metric("Total Revenue", f"Rs.{total_revenue/1000000:.2f}M", delta="+12%")
+    with col3:
+        st.metric("Average Sale", f"Rs.{avg_sale:.0f}", delta="+8%")
+    with col4:
+        top_model = filtered_sales['Model'].mode().iloc[0] if len(filtered_sales) > 0 else "N/A"
+        st.metric("Top Model", top_model)
+    
+    # Real-time charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Sales by Model (Real-time)
+        st.subheader("Sales by Model (Live Data)")
+        if len(filtered_sales) > 0:
+            model_sales = filtered_sales['Model'].value_counts()
+            fig = px.pie(values=model_sales.values, names=model_sales.index, 
+                        title="Sales Distribution by Model")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No sales data for selected period")
+    
+    with col2:
+        # Sales by Payment Method (Real-time)
+        st.subheader("Sales by Payment Method (Live Data)")
+        if len(filtered_sales) > 0:
+            payment_sales = filtered_sales['PaymentMethod'].value_counts()
+            fig = px.bar(x=payment_sales.index, y=payment_sales.values,
+                        title="Sales by Payment Method")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No payment data for selected period")
+    
+    # Monthly sales trend with proper 12-month display (Real-time)
+    st.subheader("Monthly Sales Trend (Real-Time Data)")
+    
+    # Create complete 12-month framework
+    all_months_df = pd.DataFrame({
+        'Month': range(1, 13),
+        'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    })
+    
+    # Get actual monthly sales data from real-time data
+    if len(filtered_sales) > 0:
+        monthly_sales = filtered_sales.groupby(filtered_sales['PurchaseDate'].dt.month).agg({
+            'Payment': 'sum',
+            'VehicleNumber': 'count'
+        }).reset_index()
+        monthly_sales.columns = ['Month', 'Revenue', 'Count']
+        
+        # Merge with complete 12-month data
+        complete_monthly_sales = all_months_df.merge(monthly_sales, on='Month', how='left')
+        complete_monthly_sales['Revenue'] = complete_monthly_sales['Revenue'].fillna(0)
+        complete_monthly_sales['Count'] = complete_monthly_sales['Count'].fillna(0)
+        
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig.add_trace(
+            go.Bar(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Revenue'], 
+                   name="Revenue", marker_color='lightblue'),
+            secondary_y=False,
+        )
+        fig.add_trace(
+            go.Scatter(x=complete_monthly_sales['MonthName'], y=complete_monthly_sales['Count'], 
+                      name="Count", mode='lines+markers', marker_color='red'),
+            secondary_y=True,
+        )
+        fig.update_yaxes(title_text="Revenue (Rs.)", secondary_y=False)
+        fig.update_yaxes(title_text="Number of Sales", secondary_y=True)
+        fig.update_layout(title_text="Monthly Sales Revenue and Count - Full Year (Real-Time)")
+        
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No sales data available for monthly trend analysis")
+    
+    # Real-time detailed sales table
+    st.subheader("Detailed Sales Data (Real-Time)")
+    if len(filtered_sales) > 0:
+        # Add action buttons for real-time operations
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("📊 Export to CSV"):
+                csv = filtered_sales.to_csv(index=False)
+                st.download_button("Download CSV", csv, "sales_report.csv", "text/csv")
+        with col2:
+            if st.button("🔄 Refresh Data"):
+                st.rerun()
+        with col3:
+            st.info(f"Last Updated: {datetime.now().strftime('%H:%M:%S')}")
+        
+        st.dataframe(filtered_sales, use_container_width=True)
+        
+        # Real-time sales summary
+        st.subheader("📈 Real-Time Sales Summary")
+        
+        if len(filtered_sales) > 0:
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.success("🚗 **Vehicle Types Sold**")
+                vehicle_type_counts = filtered_sales['VehicleType'].value_counts()
+                for vehicle_type, count in vehicle_type_counts.items():
+                    st.write(f"• {vehicle_type}: {count} units")
+            
+            with col2:
+                st.info("💳 **Payment Methods Used**")
+                payment_counts = filtered_sales['PaymentMethod'].value_counts()
+                for method, count in payment_counts.items():
+                    st.write(f"• {method}: {count} sales")
+            
+            with col3:
+                st.warning("📅 **Recent Activity**")
+                recent_sales = filtered_sales.nlargest(3, 'PurchaseDate')[['VehicleNumber', 'CustomerName', 'Payment']]
+                for _, sale in recent_sales.iterrows():
+                    st.write(f"• {sale['VehicleNumber']}: Rs.{sale['Payment']/1000:.0f}k")
+        else:
+            st.info("No sales summary available - no sales in selected period")
+    else:
+        st.info("No sales data available for the selected date range")
+
+# Footer
+st.markdown("""
+<div style="text-align: center; color: #ecf0f1; padding: 2rem; background: linear-gradient(to bottom, #0d0f14, #000000); border-radius: 15px; margin: 2rem 0;">
+    <h3>🚗 CM Vehicle Management System</h3>
+    <p><strong>Real-Time Vehicle Sales & Management Dashboard</strong></p>
+    <p>Built with Group AT | © 2025 CM Vehicle Management. All rights reserved.</p>
+    <p style="font-size: 0.9rem; opacity: 0.8;">
+        📧 Email: chamod@cmvehicles.com | 📞 Phone: +94 70 520 6400 
+    </p>
+    <p style="font-size: 0.8rem; opacity: 0.6;">
+        ⚡ Real-Time Updates Enabled | 🔄 Data Synced: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    </p>
+</div>
 
 # Continue with remaining pages...
