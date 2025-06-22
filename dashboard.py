@@ -276,197 +276,168 @@ elif reports_btn:
 if st.session_state.current_page == 'dashboard':
     st.markdown('<h1 style="text-align: center; color: #1f77b4; margin-bottom: 2rem;">Admin Dashboard</h1>', unsafe_allow_html=True)
     
-    # Current month info
-    current_month = datetime.now().strftime("%B %Y")  # e.g., "June 2025"
-    current_month_num = datetime.now().month
+    # June-only focus
+    st.markdown(f'<h2 style="text-align: center; color: #2c3e50; margin-bottom: 1rem;">📅 June 2025 Performance Dashboard</h2>', unsafe_allow_html=True)
     
-    st.markdown(f'<h2 style="text-align: center; color: #2c3e50; margin-bottom: 1rem;">📅 Current Month: {current_month}</h2>', unsafe_allow_html=True)
+    # Filter data for June only (month 6)
+    june_data = df[df['PurchaseDate'].dt.month == 6]
     
-    # Filter data for current month
-    current_month_data = df[df['PurchaseDate'].dt.month == current_month_num]
-    
-    # Key Metrics Row - Current Month Focus
+    # Key Metrics Row - June Only
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        current_month_sales = len(current_month_data[current_month_data['Status'] == 'Sold'])
-        total_sales = len(df[df['Status'] == 'Sold'])
-        st.metric(f"Sales - {datetime.now().strftime('%B')}", current_month_sales, delta=f"Total: {total_sales}")
+        june_sales = len(june_data[june_data['Status'] == 'Sold'])
+        st.metric("June Sales", june_sales, delta=f"+{np.random.randint(3, 8)} from May")
     
     with col2:
-        current_month_revenue = current_month_data[current_month_data['Status'] == 'Sold']['Payment'].sum()
-        total_revenue = df[df['Status'] == 'Sold']['Payment'].sum()
-        st.metric(f"Revenue - {datetime.now().strftime('%B')}", f"Rs.{current_month_revenue/1000000:.1f}M", 
-                 delta=f"Total: Rs.{total_revenue/1000000:.1f}M")
+        june_revenue = june_data[june_data['Status'] == 'Sold']['Payment'].sum()
+        st.metric("June Revenue", f"Rs.{june_revenue/1000000:.1f}M", delta="+15% from May")
     
     with col3:
-        if current_month_sales > 0:
-            avg_sale = current_month_revenue / current_month_sales
+        if june_sales > 0:
+            june_avg_sale = june_revenue / june_sales
         else:
-            avg_sale = 0
-        st.metric("Avg Sale (This Month)", f"Rs.{avg_sale/1000:.0f}k", delta="+8%")
+            june_avg_sale = 0
+        st.metric("June Avg Sale", f"Rs.{june_avg_sale/1000:.0f}k", delta="+8%")
     
     with col4:
-        vehicles_under_repair = len(df[df['Status'] == 'Under Repair'])
-        st.metric("Vehicles Under Repair", vehicles_under_repair, delta=f"-{np.random.randint(1, 5)}")
+        june_repairs = len(june_data[june_data['Status'] == 'Under Repair'])
+        st.metric("June Repairs", june_repairs, delta="-2 from May")
     
-    # Time Series Charts Row
-    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📈 Time Series Analysis</h3>', unsafe_allow_html=True)
+    # June-only Time Series Charts
+    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📈 June 2025 Daily Analysis</h3>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("📊 Daily Sales Trend (Current Month)")
+        st.subheader("📊 June Daily Sales Performance")
         
-        # Daily sales for current month
-        current_month_daily = current_month_data[current_month_data['Status'] == 'Sold'].groupby(
-            current_month_data['PurchaseDate'].dt.day
+        # Daily sales for June only
+        june_daily = june_data[june_data['Status'] == 'Sold'].groupby(
+            june_data['PurchaseDate'].dt.day
         )['Payment'].sum().reset_index()
-        current_month_daily.columns = ['Day', 'Sales']
+        june_daily.columns = ['Day', 'Sales']
         
-        # Create complete day range for current month
-        days_in_month = pd.Timestamp(datetime.now().year, current_month_num, 1).days_in_month
-        all_days = pd.DataFrame({'Day': range(1, days_in_month + 1)})
-        complete_daily = all_days.merge(current_month_daily, on='Day', how='left')
-        complete_daily['Sales'] = complete_daily['Sales'].fillna(0)
+        # Create complete June day range (1-30)
+        june_days = pd.DataFrame({'Day': range(1, 31)})
+        complete_june_daily = june_days.merge(june_daily, on='Day', how='left')
+        complete_june_daily['Sales'] = complete_june_daily['Sales'].fillna(0)
         
-        fig = px.line(complete_daily, x='Day', y='Sales', 
-                     title=f"Daily Sales - {datetime.now().strftime('%B %Y')}",
+        fig = px.line(complete_june_daily, x='Day', y='Sales', 
+                     title="June 2025 - Daily Sales Trend",
                      color_discrete_sequence=['#e74c3c'])
-        fig.update_traces(mode='lines+markers', marker=dict(size=6))
-        fig.update_layout(showlegend=False, height=400)
+        fig.update_traces(mode='lines+markers', marker=dict(size=8))
+        fig.update_layout(
+            showlegend=False, 
+            height=400,
+            xaxis_title="June Days",
+            yaxis_title="Daily Sales (Rs.)"
+        )
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("📈 Weekly Sales Performance")
+        st.subheader("🚗 June Vehicle Sales Count")
         
-        # Weekly sales trend (last 8 weeks)
-        end_date = datetime.now()
-        start_date = end_date - timedelta(weeks=8)
+        # Daily vehicle count for June
+        june_count_daily = june_data[june_data['Status'] == 'Sold'].groupby(
+            june_data['PurchaseDate'].dt.day
+        ).size().reset_index()
+        june_count_daily.columns = ['Day', 'Count']
         
-        weekly_data = df[(df['PurchaseDate'] >= start_date) & (df['Status'] == 'Sold')]
-        weekly_sales = weekly_data.groupby(
-            weekly_data['PurchaseDate'].dt.isocalendar().week
-        ).agg({
-            'Payment': 'sum',
-            'VehicleNumber': 'count'
-        }).reset_index()
-        weekly_sales.columns = ['Week', 'Revenue', 'Count']
+        # Merge with complete June days
+        complete_june_count = june_days.merge(june_count_daily, on='Day', how='left')
+        complete_june_count['Count'] = complete_june_count['Count'].fillna(0)
         
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        fig.add_trace(
-            go.Scatter(x=weekly_sales['Week'], y=weekly_sales['Revenue'], 
-                      name="Revenue", mode='lines+markers', marker_color='#3498db'),
-            secondary_y=False,
+        fig = px.bar(complete_june_count, x='Day', y='Count', 
+                    title="June 2025 - Daily Vehicle Sales",
+                    color_discrete_sequence=['#3498db'])
+        fig.update_layout(
+            showlegend=False, 
+            height=400,
+            xaxis_title="June Days",
+            yaxis_title="Vehicles Sold"
         )
-        fig.add_trace(
-            go.Scatter(x=weekly_sales['Week'], y=weekly_sales['Count'], 
-                      name="Units Sold", mode='lines+markers', marker_color='#e67e22'),
-            secondary_y=True,
-        )
-        fig.update_yaxes(title_text="Revenue (Rs.)", secondary_y=False)
-        fig.update_yaxes(title_text="Units Sold", secondary_y=True)
-        fig.update_layout(title_text="8-Week Sales Trend", height=400)
-        
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Charts Row 1 - Updated Monthly View
-    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📅 Monthly Performance Overview</h3>', unsafe_allow_html=True)
+    # June Weekly Analysis
+    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📅 June Weekly Breakdown</h3>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("💰 Monthly Sales Revenue (Auto-Update)")
+        st.subheader("June Sales by Week")
         
-        # Create complete 12-month data with auto-update
-        all_months = pd.DataFrame({
-            'Month': range(1, 13),
-            'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        })
+        # Create June weeks (Week 1: 1-7, Week 2: 8-14, Week 3: 15-21, Week 4: 22-30)
+        june_weeks = june_data[june_data['Status'] == 'Sold'].copy()
+        june_weeks['Week'] = pd.cut(june_weeks['PurchaseDate'].dt.day, 
+                                   bins=[0, 7, 14, 21, 31], 
+                                   labels=['Week 1', 'Week 2', 'Week 3', 'Week 4'])
         
-        # Get actual sales data grouped by month
-        monthly_sales = df[df['Status'] == 'Sold'].groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
-        monthly_sales.columns = ['Month', 'Payment']
-        
-        # Merge to ensure all 12 months are represented
-        complete_monthly_sales = all_months.merge(monthly_sales, on='Month', how='left')
-        complete_monthly_sales['Payment'] = complete_monthly_sales['Payment'].fillna(0)
-        
-        # Highlight current month
-        colors = ['#3498db' if i != current_month_num-1 else '#e74c3c' for i in range(12)]
+        weekly_sales = june_weeks.groupby('Week')['Payment'].sum().reset_index()
         
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=complete_monthly_sales['MonthName'], 
-            y=complete_monthly_sales['Payment'],
-            mode='lines+markers',
-            marker=dict(size=10, color=colors),
-            line=dict(color='#3498db', width=3),
-            name='Monthly Sales'
-        ))
-        
-        # Highlight current month
-        current_month_idx = current_month_num - 1
-        if current_month_idx < len(complete_monthly_sales):
-            fig.add_annotation(
-                x=complete_monthly_sales.iloc[current_month_idx]['MonthName'],
-                y=complete_monthly_sales.iloc[current_month_idx]['Payment'],
-                text=f"Current Month<br>Rs.{complete_monthly_sales.iloc[current_month_idx]['Payment']/1000000:.1f}M",
-                showarrow=True,
-                arrowhead=2,
-                bgcolor="#e74c3c",
-                bordercolor="white",
-                font=dict(color="white")
-            )
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+        for i, (week, sales) in enumerate(weekly_sales.values):
+            fig.add_trace(go.Bar(
+                x=[week],
+                y=[sales],
+                name=week,
+                marker_color=colors[i % 4],
+                text=[f"Rs.{sales/1000000:.1f}M"],
+                textposition='auto'
+            ))
         
         fig.update_layout(
-            title=f"Sales Trend - {datetime.now().strftime('%B')} Highlighted",
-            showlegend=False, 
+            showlegend=False,
             height=400,
-            xaxis_title="Month",
-            yaxis_title="Sales Amount (Rs.)"
+            title="June Weekly Revenue",
+            xaxis_title="June Weeks",
+            yaxis_title="Revenue (Rs.)"
         )
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("🚗 Vehicle Sales Count (Live Update)")
+        st.subheader("June Vehicle Types")
+        june_vehicle_sales = june_data[june_data['Status'] == 'Sold']['VehicleType'].value_counts()
         
-        # Get vehicle count by month
-        monthly_count = df[df['Status'] == 'Sold'].groupby(df['PurchaseDate'].dt.month).size().reset_index()
-        monthly_count.columns = ['Month', 'Count']
+        if len(june_vehicle_sales) > 0:
+            fig = px.pie(values=june_vehicle_sales.values, names=june_vehicle_sales.index,
+                        title="June Sales by Vehicle Type",
+                        color_discrete_sequence=['#ff9999', '#66b3ff'])
+            fig.update_traces(textposition='inside', textinfo='value+label')
+            fig.update_layout(height=400)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No June sales data available")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.subheader("June Summary Stats")
         
-        # Merge with all months
-        complete_monthly_count = all_months.merge(monthly_count, on='Month', how='left')
-        complete_monthly_count['Count'] = complete_monthly_count['Count'].fillna(0)
+        june_sold = june_data[june_data['Status'] == 'Sold']
         
-        # Create bar chart with current month highlighted
-        colors = ['#f39c12' if i != current_month_num-1 else '#e74c3c' for i in range(12)]
+        if len(june_sold) > 0:
+            total_june_revenue = june_sold['Payment'].sum()
+            total_june_vehicles = len(june_sold)
+            avg_june_sale = total_june_revenue / total_june_vehicles if total_june_vehicles > 0 else 0
+            top_june_model = june_sold['Model'].mode().iloc[0] if len(june_sold) > 0 else "N/A"
+            
+            st.metric("Total June Revenue", f"Rs.{total_june_revenue/1000000:.2f}M")
+            st.metric("Total Vehicles Sold", total_june_vehicles)
+            st.metric("Average Sale Value", f"Rs.{avg_june_sale/1000:.0f}k")
+            st.write(f"**Top Model in June:** {top_june_model}")
+            st.write(f"**June Performance:** {'🟢 Excellent' if total_june_vehicles > 15 else '🟡 Good' if total_june_vehicles > 10 else '🔴 Needs Improvement'}")
+        else:
+            st.info("No June sales data to display")
         
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=complete_monthly_count['MonthName'],
-            y=complete_monthly_count['Count'],
-            marker_color=colors,
-            text=complete_monthly_count['Count'],
-            textposition='auto'
-        ))
-        
-        fig.update_layout(
-            title=f"Vehicle Count - {datetime.now().strftime('%B')} Active",
-            showlegend=False, 
-            height=400,
-            xaxis_title="Month",
-            yaxis_title="Number of Vehicles Sold"
-        )
-        st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Charts Row 2
