@@ -276,33 +276,114 @@ elif reports_btn:
 if st.session_state.current_page == 'dashboard':
     st.markdown('<h1 style="text-align: center; color: #1f77b4; margin-bottom: 2rem;">Admin Dashboard</h1>', unsafe_allow_html=True)
     
-    # Key Metrics Row
+    # Current month info
+    current_month = datetime.now().strftime("%B %Y")  # e.g., "June 2025"
+    current_month_num = datetime.now().month
+    
+    st.markdown(f'<h2 style="text-align: center; color: #2c3e50; margin-bottom: 1rem;">📅 Current Month: {current_month}</h2>', unsafe_allow_html=True)
+    
+    # Filter data for current month
+    current_month_data = df[df['PurchaseDate'].dt.month == current_month_num]
+    
+    # Key Metrics Row - Current Month Focus
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
+        current_month_sales = len(current_month_data[current_month_data['Status'] == 'Sold'])
         total_sales = len(df[df['Status'] == 'Sold'])
-        st.metric("Number Of Sales", total_sales, delta=f"+{np.random.randint(5, 15)}")
+        st.metric(f"Sales - {datetime.now().strftime('%B')}", current_month_sales, delta=f"Total: {total_sales}")
     
     with col2:
+        current_month_revenue = current_month_data[current_month_data['Status'] == 'Sold']['Payment'].sum()
         total_revenue = df[df['Status'] == 'Sold']['Payment'].sum()
-        st.metric("Total Sales", f"Rs.{total_revenue/1000000:.1f}M", delta="+12%")
+        st.metric(f"Revenue - {datetime.now().strftime('%B')}", f"Rs.{current_month_revenue/1000000:.1f}M", 
+                 delta=f"Total: Rs.{total_revenue/1000000:.1f}M")
     
     with col3:
-        monthly_profit = total_revenue * 0.15  # Assuming 15% profit margin
-        st.metric("Monthly Profit", f"Rs.{monthly_profit/1000000:.1f}M", delta="+8%")
+        if current_month_sales > 0:
+            avg_sale = current_month_revenue / current_month_sales
+        else:
+            avg_sale = 0
+        st.metric("Avg Sale (This Month)", f"Rs.{avg_sale/1000:.0f}k", delta="+8%")
     
     with col4:
         vehicles_under_repair = len(df[df['Status'] == 'Under Repair'])
         st.metric("Vehicles Under Repair", vehicles_under_repair, delta=f"-{np.random.randint(1, 5)}")
     
-    # Charts Row 1
+    # Time Series Charts Row
+    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📈 Time Series Analysis</h3>', unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("Total Sales 2025")
+        st.subheader("📊 Daily Sales Trend (Current Month)")
         
-        # Create complete 12-month data
+        # Daily sales for current month
+        current_month_daily = current_month_data[current_month_data['Status'] == 'Sold'].groupby(
+            current_month_data['PurchaseDate'].dt.day
+        )['Payment'].sum().reset_index()
+        current_month_daily.columns = ['Day', 'Sales']
+        
+        # Create complete day range for current month
+        days_in_month = pd.Timestamp(datetime.now().year, current_month_num, 1).days_in_month
+        all_days = pd.DataFrame({'Day': range(1, days_in_month + 1)})
+        complete_daily = all_days.merge(current_month_daily, on='Day', how='left')
+        complete_daily['Sales'] = complete_daily['Sales'].fillna(0)
+        
+        fig = px.line(complete_daily, x='Day', y='Sales', 
+                     title=f"Daily Sales - {datetime.now().strftime('%B %Y')}",
+                     color_discrete_sequence=['#e74c3c'])
+        fig.update_traces(mode='lines+markers', marker=dict(size=6))
+        fig.update_layout(showlegend=False, height=400)
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.subheader("📈 Weekly Sales Performance")
+        
+        # Weekly sales trend (last 8 weeks)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(weeks=8)
+        
+        weekly_data = df[(df['PurchaseDate'] >= start_date) & (df['Status'] == 'Sold')]
+        weekly_sales = weekly_data.groupby(
+            weekly_data['PurchaseDate'].dt.isocalendar().week
+        ).agg({
+            'Payment': 'sum',
+            'VehicleNumber': 'count'
+        }).reset_index()
+        weekly_sales.columns = ['Week', 'Revenue', 'Count']
+        
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig.add_trace(
+            go.Scatter(x=weekly_sales['Week'], y=weekly_sales['Revenue'], 
+                      name="Revenue", mode='lines+markers', marker_color='#3498db'),
+            secondary_y=False,
+        )
+        fig.add_trace(
+            go.Scatter(x=weekly_sales['Week'], y=weekly_sales['Count'], 
+                      name="Units Sold", mode='lines+markers', marker_color='#e67e22'),
+            secondary_y=True,
+        )
+        fig.update_yaxes(title_text="Revenue (Rs.)", secondary_y=False)
+        fig.update_yaxes(title_text="Units Sold", secondary_y=True)
+        fig.update_layout(title_text="8-Week Sales Trend", height=400)
+        
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Charts Row 1 - Updated Monthly View
+    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📅 Monthly Performance Overview</h3>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.subheader("💰 Monthly Sales Revenue (Auto-Update)")
+        
+        # Create complete 12-month data with auto-update
         all_months = pd.DataFrame({
             'Month': range(1, 13),
             'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -310,42 +391,76 @@ if st.session_state.current_page == 'dashboard':
         })
         
         # Get actual sales data grouped by month
-        monthly_sales = df.groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
+        monthly_sales = df[df['Status'] == 'Sold'].groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
         monthly_sales.columns = ['Month', 'Payment']
         
         # Merge to ensure all 12 months are represented
         complete_monthly_sales = all_months.merge(monthly_sales, on='Month', how='left')
         complete_monthly_sales['Payment'] = complete_monthly_sales['Payment'].fillna(0)
         
-        fig = px.line(complete_monthly_sales, x='MonthName', y='Payment', 
-                     title="Monthly Sales Trend - Full Year",
-                     color_discrete_sequence=['#9467bd'])
+        # Highlight current month
+        colors = ['#3498db' if i != current_month_num-1 else '#e74c3c' for i in range(12)]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=complete_monthly_sales['MonthName'], 
+            y=complete_monthly_sales['Payment'],
+            mode='lines+markers',
+            marker=dict(size=10, color=colors),
+            line=dict(color='#3498db', width=3),
+            name='Monthly Sales'
+        ))
+        
+        # Highlight current month
+        current_month_idx = current_month_num - 1
+        if current_month_idx < len(complete_monthly_sales):
+            fig.add_annotation(
+                x=complete_monthly_sales.iloc[current_month_idx]['MonthName'],
+                y=complete_monthly_sales.iloc[current_month_idx]['Payment'],
+                text=f"Current Month<br>Rs.{complete_monthly_sales.iloc[current_month_idx]['Payment']/1000000:.1f}M",
+                showarrow=True,
+                arrowhead=2,
+                bgcolor="#e74c3c",
+                bordercolor="white",
+                font=dict(color="white")
+            )
+        
         fig.update_layout(
+            title=f"Sales Trend - {datetime.now().strftime('%B')} Highlighted",
             showlegend=False, 
             height=400,
             xaxis_title="Month",
             yaxis_title="Sales Amount (Rs.)"
         )
-        fig.update_traces(mode='lines+markers', marker=dict(size=8))
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("Monthly Sales Vehicle Count")
+        st.subheader("🚗 Vehicle Sales Count (Live Update)")
         
         # Get vehicle count by month
-        monthly_count = df.groupby(df['PurchaseDate'].dt.month).size().reset_index()
+        monthly_count = df[df['Status'] == 'Sold'].groupby(df['PurchaseDate'].dt.month).size().reset_index()
         monthly_count.columns = ['Month', 'Count']
         
         # Merge with all months
         complete_monthly_count = all_months.merge(monthly_count, on='Month', how='left')
         complete_monthly_count['Count'] = complete_monthly_count['Count'].fillna(0)
         
-        fig = px.bar(complete_monthly_count, x='MonthName', y='Count', 
-                    title="Monthly Vehicle Sales Count - Full Year",
-                    color_discrete_sequence=['#ff7f0e'])
+        # Create bar chart with current month highlighted
+        colors = ['#f39c12' if i != current_month_num-1 else '#e74c3c' for i in range(12)]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=complete_monthly_count['MonthName'],
+            y=complete_monthly_count['Count'],
+            marker_color=colors,
+            text=complete_monthly_count['Count'],
+            textposition='auto'
+        ))
+        
         fig.update_layout(
+            title=f"Vehicle Count - {datetime.now().strftime('%B')} Active",
             showlegend=False, 
             height=400,
             xaxis_title="Month",
@@ -638,14 +753,30 @@ elif st.session_state.current_page == 'supplier_management':
     tab1, tab2, tab3 = st.tabs(["All Suppliers", "Add Supplier", "Update Supplier"])
     
     with tab1:
-        # Generate supplier data
+        # Generate realistic Sri Lankan supplier data
+        sri_lankan_supplier_companies = [
+            'Abans PLC', 'Singer (Sri Lanka) PLC', 'Softlogic Holdings PLC', 'Hemas Holdings PLC',
+            'John Keells Holdings PLC', 'Cargills (Ceylon) PLC', 'Commercial Bank of Ceylon PLC',
+            'Dialog Axiata PLC', 'Ceylon Tobacco Company PLC', 'Lanka IOC PLC',
+            'Dimo Motors', 'United Motors Lanka (UML)', 'AMW Group', 'David Pieris Motor Company',
+            'Ideal Motors', 'Micro Cars (Pvt) Ltd', 'Stafford Motor Company', 'Prestige Automobile',
+            'Asia Motor Works', 'Central Finance Company PLC'
+        ]
+        
+        supplier_types = ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider']
+        
         suppliers = pd.DataFrame({
-            'SupplierID': range(1, 11),
-            'FirstName': [f"Supplier_{i}" for i in range(1, 11)],
-            'LastName': [f"LastName_{i}" for i in range(1, 11)],
-            'Address': [f"Supplier Address {i}" for i in range(1, 11)],
-            'NIC': [f"{np.random.randint(100000000, 999999999)}V" for _ in range(10)],
-            'Phone': [f"07{np.random.randint(10000000, 99999999)}" for _ in range(10)]
+            'SupplierID': [f"SUP{str(i).zfill(3)}" for i in range(1, 21)],
+            'CompanyName': np.random.choice(sri_lankan_supplier_companies, 20, replace=False),
+            'ContactPerson': [f"{np.random.choice(['Kamal', 'Nimal', 'Sunil', 'Rohan', 'Ajith', 'Chaminda', 'Pradeep', 'Nuwan', 'Dinesh', 'Mahesh', 'Saman', 'Ruwan', 'Gayan', 'Chathura', 'Thilina'])} {np.random.choice(['Silva', 'Perera', 'Fernando', 'Jayawardena', 'Gunasekara', 'Wijesinghe', 'Rajapaksa', 'Wickramasinghe', 'Mendis', 'Bandara'])}" for _ in range(20)],
+            'SupplierType': np.random.choice(supplier_types, 20),
+            'Address': [f"{np.random.randint(100, 999)}, {np.random.choice(['Galle Road', 'Kandy Road', 'Negombo Road', 'Baseline Road', 'Duplication Road'])}, {np.random.choice(['Colombo 03', 'Colombo 04', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Kandy', 'Galle', 'Negombo'])}" for _ in range(20)],
+            'Phone': [f"011{np.random.randint(2000000, 2999999)}" for _ in range(20)],
+            'Email': [f"{company.lower().replace(' ', '').replace('(', '').replace(')', '').replace('pvt', '').replace('plc', '').replace('ltd', '')}@gmail.com" for company in np.random.choice(sri_lankan_supplier_companies, 20, replace=False)],
+            'Rating': np.random.choice([3.5, 4.0, 4.2, 4.5, 4.7, 4.8, 4.9, 5.0], 20),
+            'LastDelivery': pd.date_range(start='2024-01-01', end='2025-06-01', periods=20).strftime('%Y-%m-%d'),
+            'TotalOrders': np.random.randint(5, 150, 20),
+            'Status': np.random.choice(['Active', 'Pending', 'Suspended'], 20, p=[0.8, 0.15, 0.05])
         })
         
         st.dataframe(suppliers, use_container_width=True)
@@ -655,13 +786,16 @@ elif st.session_state.current_page == 'supplier_management':
         
         col1, col2 = st.columns(2)
         with col1:
-            supplier_first_name = st.text_input("First Name")
+            company_name = st.text_input("Company Name")
+            contact_person = st.text_input("Contact Person")
+            supplier_type = st.selectbox("Supplier Type", ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'])
             supplier_address = st.text_area("Address")
-            supplier_nic = st.text_input("NIC Number")
         
         with col2:
-            supplier_last_name = st.text_input("Last Name")
-            supplier_phone = st.text_input("Phone Numbers")
+            phone_number = st.text_input("Phone Number")
+            email_address = st.text_input("Email Address")
+            rating = st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5])
+            status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'])
         
         col1, col2 = st.columns(2)
         with col1:
@@ -673,23 +807,29 @@ elif st.session_state.current_page == 'supplier_management':
     
     with tab3:
         st.subheader("Update Supplier")
-        suppliers = pd.DataFrame({
-            'SupplierID': range(1, 11),
-            'FirstName': [f"Supplier_{i}" for i in range(1, 11)],
-            'LastName': [f"LastName_{i}" for i in range(1, 11)]
-        })
-        supplier_to_update = st.selectbox("Select Supplier", suppliers['FirstName'].tolist())
+        
+        # Use realistic supplier data for update
+        sri_lankan_supplier_companies = [
+            'Abans PLC', 'Singer (Sri Lanka) PLC', 'Softlogic Holdings PLC', 'Hemas Holdings PLC',
+            'John Keells Holdings PLC', 'Cargills (Ceylon) PLC', 'Commercial Bank of Ceylon PLC',
+            'Dialog Axiata PLC', 'Ceylon Tobacco Company PLC', 'Lanka IOC PLC'
+        ]
+        
+        supplier_to_update = st.selectbox("Select Supplier", sri_lankan_supplier_companies)
         
         if supplier_to_update:
             col1, col2 = st.columns(2)
             with col1:
-                st.text_input("First Name", value="Sample", key="update_sup_fname")
-                st.text_area("Address", value="Sample Address", key="update_sup_address")
-                st.text_input("NIC Number", value="123456789V", key="update_sup_nic")
+                st.text_input("Company Name", value=supplier_to_update, key="update_sup_company")
+                st.text_input("Contact Person", value="Kamal Silva", key="update_sup_contact")
+                st.selectbox("Supplier Type", ['Vehicle Importer', 'Parts Supplier', 'Service Provider'], key="update_sup_type")
+                st.text_area("Address", value="123, Galle Road, Colombo 03", key="update_sup_address")
             
             with col2:
-                st.text_input("Last Name", value="Supplier", key="update_sup_lname")
-                st.text_input("Phone Number", value="0771234567", key="update_sup_phone")
+                st.text_input("Phone Number", value="0112345678", key="update_sup_phone")
+                st.text_input("Email", value="info@company.lk", key="update_sup_email")
+                st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5], key="update_sup_rating")
+                st.selectbox("Status", ['Active', 'Pending', 'Suspended'], key="update_sup_status")
             
             col1, col2 = st.columns(2)
             with col1:
