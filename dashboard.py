@@ -47,6 +47,40 @@ def load_sample_data():
     bike_models = ['Dio', 'Pulsar', 'Fz', 'Ct100', 'Platina']
     three_wheel_models = ['Auto Rickshaw', 'Three Wheeler']
     
+    # Sri Lankan names database
+    sri_lankan_first_names = [
+        'Kamal', 'Nimal', 'Sunil', 'Rohan', 'Ajith', 'Chaminda', 'Pradeep', 'Nuwan', 'Dinesh', 'Mahesh',
+        'Saman', 'Ruwan', 'Gayan', 'Chathura', 'Thilina', 'Kasun', 'Lahiru', 'Dilan', 'Buddhika', 'Sampath',
+        'Kumara', 'Thushara', 'Indika', 'Chandana', 'Tharaka', 'Sandun', 'Prasad', 'Udaya', 'Janaka', 'Dilshan',
+        'Sachith', 'Ranjan', 'Lakmal', 'Nalin', 'Dileepa', 'Charith', 'Ashan', 'Ranil', 'Asanka', 'Chamara',
+        'Raveena', 'Sewwandi', 'Nimali', 'Rashika', 'Sandani', 'Thanuja', 'Kavisha', 'Dilrukshi', 'Chathurika', 'Dinusha',
+        'Gayani', 'Malani', 'Anusha', 'Shamali', 'Nadeeka', 'Priyanka', 'Charuni', 'Manisha', 'Randika', 'Tharushi',
+        'Hiruni', 'Sachini', 'Buddhini', 'Nayana', 'Ishara', 'Amila', 'Suranga', 'Darshana', 'Isuru', 'Shanka'
+    ]
+    
+    sri_lankan_last_names = [
+        'Silva', 'Perera', 'Fernando', 'Jayawardena', 'Gunasekara', 'Wijesinghe', 'Rajapaksa', 'Wickramasinghe',
+        'Mendis', 'Bandara', 'Rathnayaka', 'Dissanayaka', 'Gunawardena', 'Senaratne', 'Wijerathne', 'Peiris',
+        'Kumara', 'Weerasinghe', 'Jayasuriya', 'Ranasinghe', 'Gamage', 'Amarasinghe', 'Liyanage', 'Abeywardena',
+        'Abeysinghe', 'Wickremaratne', 'Ratnayake', 'Kumarasinghe', 'Priyantha', 'Samaraweera', 'Herath', 'Karunaratne',
+        'Jayaratne', 'Weerasekara', 'Kodikara', 'Senanayake', 'Wickramage', 'Dharmasena', 'Pathirana', 'Madusanka'
+    ]
+    
+    # Sri Lankan cities and areas
+    sri_lankan_addresses = [
+        'Colombo 01', 'Colombo 02', 'Colombo 03', 'Colombo 04', 'Colombo 05', 'Colombo 06', 'Colombo 07',
+        'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Panadura', 'Kalutara', 'Beruwala', 'Bentota', 'Galle',
+        'Matara', 'Tangalle', 'Hambantota', 'Ratnapura', 'Embilipitiya', 'Balangoda', 'Kandy', 'Peradeniya',
+        'Gampola', 'Nawalapitiya', 'Hatton', 'Nuwara Eliya', 'Bandarawela', 'Badulla', 'Monaragala', 'Wellawaya',
+        'Kurunegala', 'Puttalam', 'Chilaw', 'Negombo', 'Wattala', 'Ja-Ela', 'Gampaha', 'Kadawatha', 'Ragama',
+        'Kelaniya', 'Maharagama', 'Kottawa', 'Piliyandala', 'Homagama', 'Avissawella', 'Malabe', 'Battaramulla',
+        'Anuradhapura', 'Polonnaruwa', 'Dambulla', 'Sigiriya', 'Matale', 'Akurana', 'Trincomalee', 'Batticaloa',
+        'Ampara', 'Kalmunai', 'Jaffna', 'Vavuniya', 'Mannar', 'Kilinochchi', 'Mullativu'
+    ]
+    
+    # Sri Lankan vehicle number prefixes (actual format)
+    vehicle_prefixes = ['WP', 'CP', 'SP', 'EP', 'NP', 'NC', 'UP', 'SG', 'NW']
+    
     # Generate sample data with proper 12-month distribution
     data = []
     current_year = datetime.now().year
@@ -65,10 +99,43 @@ def load_sample_data():
         random_day = np.random.randint(1, 29)  # Safe day range for all months
         purchase_date = datetime(current_year, random_month, random_day)
         
+        # Generate Sri Lankan customer details
+        first_name = np.random.choice(sri_lankan_first_names)
+        last_name = np.random.choice(sri_lankan_last_names)
+        customer_name = f"{first_name} {last_name}"
+        
+        # Generate Sri Lankan style address
+        house_no = np.random.randint(1, 999)
+        street_names = ['Galle Road', 'Kandy Road', 'Negombo Road', 'Main Street', 'Temple Road', 
+                       'School Lane', 'Church Street', 'Station Road', 'Lake Road', 'Hill Street']
+        street = np.random.choice(street_names)
+        city = np.random.choice(sri_lankan_addresses)
+        address = f"{house_no}/{np.random.randint(1, 20)}, {street}, {city}"
+        
+        # Generate Sri Lankan NIC number (format: YYMMDDXXXV or new format)
+        birth_year = np.random.randint(70, 99)  # 1970-1999
+        if np.random.random() > 0.5:  # Old format
+            nic = f"{birth_year:02d}{np.random.randint(100, 365):03d}{np.random.randint(1000, 9999):04d}V"
+        else:  # New format
+            nic = f"{1900 + birth_year}{np.random.randint(100, 365):03d}{np.random.randint(10000, 99999):05d}"
+        
+        # Generate phone number (Sri Lankan format)
+        phone = f"0{np.random.choice([70, 71, 72, 75, 76, 77, 78])}{np.random.randint(1000000, 9999999)}"
+        
+        # Generate vehicle number (Sri Lankan format)
+        prefix = np.random.choice(vehicle_prefixes)
+        if vehicle_type == 'Bike':
+            vehicle_number = f"{prefix} {np.random.choice(['CAA', 'CAB', 'CAC', 'CAD', 'CAE'])} {np.random.randint(1000, 9999)}"
+        else:
+            vehicle_number = f"{prefix} {np.random.choice(['PA', 'PB', 'PC', 'PD', 'PE'])} {np.random.randint(1000, 9999)}"
+        
         data.append({
-            'VehicleNumber': f"ABC {np.random.randint(1000, 9999)}",
+            'VehicleNumber': vehicle_number,
             'CustomerId': i,
-            'CustomerName': f"Customer_{i}",
+            'CustomerName': customer_name,
+            'Address': address,
+            'NIC': nic,
+            'Phone': phone,
             'VehicleType': vehicle_type,
             'Model': model,
             'PurchaseDate': purchase_date,
@@ -476,12 +543,8 @@ elif st.session_state.current_page == 'customer_management':
     tab1, tab2, tab3 = st.tabs(["All Customers", "Add Customer", "Update Customer"])
     
     with tab1:
-        # Generate customer data
-        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
-        customers['Phone'] = [f"07{np.random.randint(10000000, 99999999)}" for _ in range(len(customers))]
-        customers['Address'] = [f"Address {i}" for i in customers['CustomerId']]
-        customers['NIC'] = [f"{np.random.randint(100000000, 999999999)}V" for _ in range(len(customers))]
-        
+        # Display customer data with Sri Lankan details
+        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
         st.dataframe(customers, use_container_width=True)
     
     with tab2:
@@ -502,19 +565,24 @@ elif st.session_state.current_page == 'customer_management':
     
     with tab3:
         st.subheader("Update Customer")
-        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
+        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
         customer_to_update = st.selectbox("Select Customer", customers['CustomerName'].tolist())
         
         if customer_to_update:
+            selected_customer = customers[customers['CustomerName'] == customer_to_update].iloc[0]
+            
             col1, col2 = st.columns(2)
             with col1:
-                st.text_input("First Name", value="Sample", key="update_fname")
-                st.text_area("Address", value="Sample Address", key="update_address")
-                st.text_input("NIC Number", value="123456789V", key="update_nic")
+                current_name_parts = selected_customer['CustomerName'].split(' ')
+                first_name = current_name_parts[0] if len(current_name_parts) > 0 else ""
+                st.text_input("First Name", value=first_name, key="update_fname")
+                st.text_area("Address", value=selected_customer['Address'], key="update_address")
+                st.text_input("NIC Number", value=selected_customer['NIC'], key="update_nic")
             
             with col2:
-                st.text_input("Last Name", value="Customer", key="update_lname")
-                st.text_input("Phone Number", value="0771234567", key="update_phone")
+                last_name = " ".join(current_name_parts[1:]) if len(current_name_parts) > 1 else ""
+                st.text_input("Last Name", value=last_name, key="update_lname")
+                st.text_input("Phone Number", value=selected_customer['Phone'], key="update_phone")
             
             col1, col2 = st.columns(2)
             with col1:
