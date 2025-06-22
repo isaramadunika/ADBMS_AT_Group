@@ -1399,7 +1399,7 @@ elif st.session_state.current_page == 'sales_reports':
         st.info("No sales data available for the selected date range")
 
 # Footer
-st.markdown("""
+st.markdown(
 <div style="text-align: center; color: #ecf0f1; padding: 2rem; background: linear-gradient(to bottom, #0d0f14, #000000); border-radius: 15px; margin: 2rem 0;">
     <h3>🚗 CM Vehicle Management System</h3>
     <p><strong>Real-Time Vehicle Sales & Management Dashboard</strong></p>
@@ -1411,5 +1411,3 @@ st.markdown("""
         ⚡ Real-Time Updates Enabled | 🔄 Data Synced: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     </p>
 </div>
-
-# Continue with remaining pages...
