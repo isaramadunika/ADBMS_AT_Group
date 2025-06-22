@@ -47,40 +47,6 @@ def load_sample_data():
     bike_models = ['Dio', 'Pulsar', 'Fz', 'Ct100', 'Platina']
     three_wheel_models = ['Auto Rickshaw', 'Three Wheeler']
     
-    # Sri Lankan names database
-    sri_lankan_first_names = [
-        'Kamal', 'Nimal', 'Sunil', 'Rohan', 'Ajith', 'Chaminda', 'Pradeep', 'Nuwan', 'Dinesh', 'Mahesh',
-        'Saman', 'Ruwan', 'Gayan', 'Chathura', 'Thilina', 'Kasun', 'Lahiru', 'Dilan', 'Buddhika', 'Sampath',
-        'Kumara', 'Thushara', 'Indika', 'Chandana', 'Tharaka', 'Sandun', 'Prasad', 'Udaya', 'Janaka', 'Dilshan',
-        'Sachith', 'Ranjan', 'Lakmal', 'Nalin', 'Dileepa', 'Charith', 'Ashan', 'Ranil', 'Asanka', 'Chamara',
-        'Raveena', 'Sewwandi', 'Nimali', 'Rashika', 'Sandani', 'Thanuja', 'Kavisha', 'Dilrukshi', 'Chathurika', 'Dinusha',
-        'Gayani', 'Malani', 'Anusha', 'Shamali', 'Nadeeka', 'Priyanka', 'Charuni', 'Manisha', 'Randika', 'Tharushi',
-        'Hiruni', 'Sachini', 'Buddhini', 'Nayana', 'Ishara', 'Amila', 'Suranga', 'Darshana', 'Isuru', 'Shanka'
-    ]
-    
-    sri_lankan_last_names = [
-        'Silva', 'Perera', 'Fernando', 'Jayawardena', 'Gunasekara', 'Wijesinghe', 'Rajapaksa', 'Wickramasinghe',
-        'Mendis', 'Bandara', 'Rathnayaka', 'Dissanayaka', 'Gunawardena', 'Senaratne', 'Wijerathne', 'Peiris',
-        'Kumara', 'Weerasinghe', 'Jayasuriya', 'Ranasinghe', 'Gamage', 'Amarasinghe', 'Liyanage', 'Abeywardena',
-        'Abeysinghe', 'Wickremaratne', 'Ratnayake', 'Kumarasinghe', 'Priyantha', 'Samaraweera', 'Herath', 'Karunaratne',
-        'Jayaratne', 'Weerasekara', 'Kodikara', 'Senanayake', 'Wickramage', 'Dharmasena', 'Pathirana', 'Madusanka'
-    ]
-    
-    # Sri Lankan cities and areas
-    sri_lankan_addresses = [
-        'Colombo 01', 'Colombo 02', 'Colombo 03', 'Colombo 04', 'Colombo 05', 'Colombo 06', 'Colombo 07',
-        'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Panadura', 'Kalutara', 'Beruwala', 'Bentota', 'Galle',
-        'Matara', 'Tangalle', 'Hambantota', 'Ratnapura', 'Embilipitiya', 'Balangoda', 'Kandy', 'Peradeniya',
-        'Gampola', 'Nawalapitiya', 'Hatton', 'Nuwara Eliya', 'Bandarawela', 'Badulla', 'Monaragala', 'Wellawaya',
-        'Kurunegala', 'Puttalam', 'Chilaw', 'Negombo', 'Wattala', 'Ja-Ela', 'Gampaha', 'Kadawatha', 'Ragama',
-        'Kelaniya', 'Maharagama', 'Kottawa', 'Piliyandala', 'Homagama', 'Avissawella', 'Malabe', 'Battaramulla',
-        'Anuradhapura', 'Polonnaruwa', 'Dambulla', 'Sigiriya', 'Matale', 'Akurana', 'Trincomalee', 'Batticaloa',
-        'Ampara', 'Kalmunai', 'Jaffna', 'Vavuniya', 'Mannar', 'Kilinochchi', 'Mullativu'
-    ]
-    
-    # Sri Lankan vehicle number prefixes (actual format)
-    vehicle_prefixes = ['WP', 'CP', 'SP', 'EP', 'NP', 'NC', 'UP', 'SG', 'NW']
-    
     # Generate sample data with proper 12-month distribution
     data = []
     current_year = datetime.now().year
@@ -99,43 +65,10 @@ def load_sample_data():
         random_day = np.random.randint(1, 29)  # Safe day range for all months
         purchase_date = datetime(current_year, random_month, random_day)
         
-        # Generate Sri Lankan customer details
-        first_name = np.random.choice(sri_lankan_first_names)
-        last_name = np.random.choice(sri_lankan_last_names)
-        customer_name = f"{first_name} {last_name}"
-        
-        # Generate Sri Lankan style address
-        house_no = np.random.randint(1, 999)
-        street_names = ['Galle Road', 'Kandy Road', 'Negombo Road', 'Main Street', 'Temple Road', 
-                       'School Lane', 'Church Street', 'Station Road', 'Lake Road', 'Hill Street']
-        street = np.random.choice(street_names)
-        city = np.random.choice(sri_lankan_addresses)
-        address = f"{house_no}/{np.random.randint(1, 20)}, {street}, {city}"
-        
-        # Generate Sri Lankan NIC number (format: YYMMDDXXXV or new format)
-        birth_year = np.random.randint(70, 99)  # 1970-1999
-        if np.random.random() > 0.5:  # Old format
-            nic = f"{birth_year:02d}{np.random.randint(100, 365):03d}{np.random.randint(1000, 9999):04d}V"
-        else:  # New format
-            nic = f"{1900 + birth_year}{np.random.randint(100, 365):03d}{np.random.randint(10000, 99999):05d}"
-        
-        # Generate phone number (Sri Lankan format)
-        phone = f"0{np.random.choice([70, 71, 72, 75, 76, 77, 78])}{np.random.randint(1000000, 9999999)}"
-        
-        # Generate vehicle number (Sri Lankan format)
-        prefix = np.random.choice(vehicle_prefixes)
-        if vehicle_type == 'Bike':
-            vehicle_number = f"{prefix} {np.random.choice(['CAA', 'CAB', 'CAC', 'CAD', 'CAE'])} {np.random.randint(1000, 9999)}"
-        else:
-            vehicle_number = f"{prefix} {np.random.choice(['PA', 'PB', 'PC', 'PD', 'PE'])} {np.random.randint(1000, 9999)}"
-        
         data.append({
-            'VehicleNumber': vehicle_number,
+            'VehicleNumber': f"ABC {np.random.randint(1000, 9999)}",
             'CustomerId': i,
-            'CustomerName': customer_name,
-            'Address': address,
-            'NIC': nic,
-            'Phone': phone,
+            'CustomerName': f"Customer_{i}",
             'VehicleType': vehicle_type,
             'Model': model,
             'PurchaseDate': purchase_date,
@@ -276,168 +209,82 @@ elif reports_btn:
 if st.session_state.current_page == 'dashboard':
     st.markdown('<h1 style="text-align: center; color: #1f77b4; margin-bottom: 2rem;">Admin Dashboard</h1>', unsafe_allow_html=True)
     
-    # June-only focus
-    st.markdown(f'<h2 style="text-align: center; color: #2c3e50; margin-bottom: 1rem;">📅 June 2025 Performance Dashboard</h2>', unsafe_allow_html=True)
-    
-    # Filter data for June only (month 6)
-    june_data = df[df['PurchaseDate'].dt.month == 6]
-    
-    # Key Metrics Row - June Only
+    # Key Metrics Row
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        june_sales = len(june_data[june_data['Status'] == 'Sold'])
-        st.metric("June Sales", june_sales, delta=f"+{np.random.randint(3, 8)} from May")
+        total_sales = len(df[df['Status'] == 'Sold'])
+        st.metric("Number Of Sales", total_sales, delta=f"+{np.random.randint(5, 15)}")
     
     with col2:
-        june_revenue = june_data[june_data['Status'] == 'Sold']['Payment'].sum()
-        st.metric("June Revenue", f"Rs.{june_revenue/1000000:.1f}M", delta="+15% from May")
+        total_revenue = df[df['Status'] == 'Sold']['Payment'].sum()
+        st.metric("Total Sales", f"Rs.{total_revenue/1000000:.1f}M", delta="+12%")
     
     with col3:
-        if june_sales > 0:
-            june_avg_sale = june_revenue / june_sales
-        else:
-            june_avg_sale = 0
-        st.metric("June Avg Sale", f"Rs.{june_avg_sale/1000:.0f}k", delta="+8%")
+        monthly_profit = total_revenue * 0.15  # Assuming 15% profit margin
+        st.metric("Monthly Profit", f"Rs.{monthly_profit/1000000:.1f}M", delta="+8%")
     
     with col4:
-        june_repairs = len(june_data[june_data['Status'] == 'Under Repair'])
-        st.metric("June Repairs", june_repairs, delta="-2 from May")
+        vehicles_under_repair = len(df[df['Status'] == 'Under Repair'])
+        st.metric("Vehicles Under Repair", vehicles_under_repair, delta=f"-{np.random.randint(1, 5)}")
     
-    # June-only Time Series Charts
-    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📈 June 2025 Daily Analysis</h3>', unsafe_allow_html=True)
-    
+    # Charts Row 1
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("📊 June Daily Sales Performance")
+        st.subheader("Total Sales 2025")
         
-        # Daily sales for June only
-        june_daily = june_data[june_data['Status'] == 'Sold'].groupby(
-            june_data['PurchaseDate'].dt.day
-        )['Payment'].sum().reset_index()
-        june_daily.columns = ['Day', 'Sales']
+        # Create complete 12-month data
+        all_months = pd.DataFrame({
+            'Month': range(1, 13),
+            'MonthName': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        })
         
-        # Create complete June day range (1-30)
-        june_days = pd.DataFrame({'Day': range(1, 31)})
-        complete_june_daily = june_days.merge(june_daily, on='Day', how='left')
-        complete_june_daily['Sales'] = complete_june_daily['Sales'].fillna(0)
+        # Get actual sales data grouped by month
+        monthly_sales = df.groupby(df['PurchaseDate'].dt.month)['Payment'].sum().reset_index()
+        monthly_sales.columns = ['Month', 'Payment']
         
-        fig = px.line(complete_june_daily, x='Day', y='Sales', 
-                     title="June 2025 - Daily Sales Trend",
-                     color_discrete_sequence=['#e74c3c'])
+        # Merge to ensure all 12 months are represented
+        complete_monthly_sales = all_months.merge(monthly_sales, on='Month', how='left')
+        complete_monthly_sales['Payment'] = complete_monthly_sales['Payment'].fillna(0)
+        
+        fig = px.line(complete_monthly_sales, x='MonthName', y='Payment', 
+                     title="Monthly Sales Trend - Full Year",
+                     color_discrete_sequence=['#9467bd'])
+        fig.update_layout(
+            showlegend=False, 
+            height=400,
+            xaxis_title="Month",
+            yaxis_title="Sales Amount (Rs.)"
+        )
         fig.update_traces(mode='lines+markers', marker=dict(size=8))
-        fig.update_layout(
-            showlegend=False, 
-            height=400,
-            xaxis_title="June Days",
-            yaxis_title="Daily Sales (Rs.)"
-        )
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("🚗 June Vehicle Sales Count")
+        st.subheader("Monthly Sales Vehicle Count")
         
-        # Daily vehicle count for June
-        june_count_daily = june_data[june_data['Status'] == 'Sold'].groupby(
-            june_data['PurchaseDate'].dt.day
-        ).size().reset_index()
-        june_count_daily.columns = ['Day', 'Count']
+        # Get vehicle count by month
+        monthly_count = df.groupby(df['PurchaseDate'].dt.month).size().reset_index()
+        monthly_count.columns = ['Month', 'Count']
         
-        # Merge with complete June days
-        complete_june_count = june_days.merge(june_count_daily, on='Day', how='left')
-        complete_june_count['Count'] = complete_june_count['Count'].fillna(0)
+        # Merge with all months
+        complete_monthly_count = all_months.merge(monthly_count, on='Month', how='left')
+        complete_monthly_count['Count'] = complete_monthly_count['Count'].fillna(0)
         
-        fig = px.bar(complete_june_count, x='Day', y='Count', 
-                    title="June 2025 - Daily Vehicle Sales",
-                    color_discrete_sequence=['#3498db'])
+        fig = px.bar(complete_monthly_count, x='MonthName', y='Count', 
+                    title="Monthly Vehicle Sales Count - Full Year",
+                    color_discrete_sequence=['#ff7f0e'])
         fig.update_layout(
             showlegend=False, 
             height=400,
-            xaxis_title="June Days",
-            yaxis_title="Vehicles Sold"
+            xaxis_title="Month",
+            yaxis_title="Number of Vehicles Sold"
         )
         st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # June Weekly Analysis
-    st.markdown('<h3 style="color: #34495e; margin: 2rem 0 1rem 0;">📅 June Weekly Breakdown</h3>', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("June Sales by Week")
-        
-        # Create June weeks (Week 1: 1-7, Week 2: 8-14, Week 3: 15-21, Week 4: 22-30)
-        june_weeks = june_data[june_data['Status'] == 'Sold'].copy()
-        june_weeks['Week'] = pd.cut(june_weeks['PurchaseDate'].dt.day, 
-                                   bins=[0, 7, 14, 21, 31], 
-                                   labels=['Week 1', 'Week 2', 'Week 3', 'Week 4'])
-        
-        weekly_sales = june_weeks.groupby('Week')['Payment'].sum().reset_index()
-        
-        fig = go.Figure()
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
-        for i, (week, sales) in enumerate(weekly_sales.values):
-            fig.add_trace(go.Bar(
-                x=[week],
-                y=[sales],
-                name=week,
-                marker_color=colors[i % 4],
-                text=[f"Rs.{sales/1000000:.1f}M"],
-                textposition='auto'
-            ))
-        
-        fig.update_layout(
-            showlegend=False,
-            height=400,
-            title="June Weekly Revenue",
-            xaxis_title="June Weeks",
-            yaxis_title="Revenue (Rs.)"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("June Vehicle Types")
-        june_vehicle_sales = june_data[june_data['Status'] == 'Sold']['VehicleType'].value_counts()
-        
-        if len(june_vehicle_sales) > 0:
-            fig = px.pie(values=june_vehicle_sales.values, names=june_vehicle_sales.index,
-                        title="June Sales by Vehicle Type",
-                        color_discrete_sequence=['#ff9999', '#66b3ff'])
-            fig.update_traces(textposition='inside', textinfo='value+label')
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No June sales data available")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.subheader("June Summary Stats")
-        
-        june_sold = june_data[june_data['Status'] == 'Sold']
-        
-        if len(june_sold) > 0:
-            total_june_revenue = june_sold['Payment'].sum()
-            total_june_vehicles = len(june_sold)
-            avg_june_sale = total_june_revenue / total_june_vehicles if total_june_vehicles > 0 else 0
-            top_june_model = june_sold['Model'].mode().iloc[0] if len(june_sold) > 0 else "N/A"
-            
-            st.metric("Total June Revenue", f"Rs.{total_june_revenue/1000000:.2f}M")
-            st.metric("Total Vehicles Sold", total_june_vehicles)
-            st.metric("Average Sale Value", f"Rs.{avg_june_sale/1000:.0f}k")
-            st.write(f"**Top Model in June:** {top_june_model}")
-            st.write(f"**June Performance:** {'🟢 Excellent' if total_june_vehicles > 15 else '🟡 Good' if total_june_vehicles > 10 else '🔴 Needs Improvement'}")
-        else:
-            st.info("No June sales data to display")
-        
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Charts Row 2
@@ -629,8 +476,12 @@ elif st.session_state.current_page == 'customer_management':
     tab1, tab2, tab3 = st.tabs(["All Customers", "Add Customer", "Update Customer"])
     
     with tab1:
-        # Display customer data with Sri Lankan details
-        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
+        # Generate customer data
+        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
+        customers['Phone'] = [f"07{np.random.randint(10000000, 99999999)}" for _ in range(len(customers))]
+        customers['Address'] = [f"Address {i}" for i in customers['CustomerId']]
+        customers['NIC'] = [f"{np.random.randint(100000000, 999999999)}V" for _ in range(len(customers))]
+        
         st.dataframe(customers, use_container_width=True)
     
     with tab2:
@@ -651,24 +502,19 @@ elif st.session_state.current_page == 'customer_management':
     
     with tab3:
         st.subheader("Update Customer")
-        customers = df[['CustomerId', 'CustomerName', 'Address', 'NIC', 'Phone']].drop_duplicates()
+        customers = df[['CustomerId', 'CustomerName']].drop_duplicates()
         customer_to_update = st.selectbox("Select Customer", customers['CustomerName'].tolist())
         
         if customer_to_update:
-            selected_customer = customers[customers['CustomerName'] == customer_to_update].iloc[0]
-            
             col1, col2 = st.columns(2)
             with col1:
-                current_name_parts = selected_customer['CustomerName'].split(' ')
-                first_name = current_name_parts[0] if len(current_name_parts) > 0 else ""
-                st.text_input("First Name", value=first_name, key="update_fname")
-                st.text_area("Address", value=selected_customer['Address'], key="update_address")
-                st.text_input("NIC Number", value=selected_customer['NIC'], key="update_nic")
+                st.text_input("First Name", value="Sample", key="update_fname")
+                st.text_area("Address", value="Sample Address", key="update_address")
+                st.text_input("NIC Number", value="123456789V", key="update_nic")
             
             with col2:
-                last_name = " ".join(current_name_parts[1:]) if len(current_name_parts) > 1 else ""
-                st.text_input("Last Name", value=last_name, key="update_lname")
-                st.text_input("Phone Number", value=selected_customer['Phone'], key="update_phone")
+                st.text_input("Last Name", value="Customer", key="update_lname")
+                st.text_input("Phone Number", value="0771234567", key="update_phone")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -724,30 +570,14 @@ elif st.session_state.current_page == 'supplier_management':
     tab1, tab2, tab3 = st.tabs(["All Suppliers", "Add Supplier", "Update Supplier"])
     
     with tab1:
-        # Generate realistic Sri Lankan supplier data
-        sri_lankan_supplier_companies = [
-            'Abans PLC', 'Singer (Sri Lanka) PLC', 'Softlogic Holdings PLC', 'Hemas Holdings PLC',
-            'John Keells Holdings PLC', 'Cargills (Ceylon) PLC', 'Commercial Bank of Ceylon PLC',
-            'Dialog Axiata PLC', 'Ceylon Tobacco Company PLC', 'Lanka IOC PLC',
-            'Dimo Motors', 'United Motors Lanka (UML)', 'AMW Group', 'David Pieris Motor Company',
-            'Ideal Motors', 'Micro Cars (Pvt) Ltd', 'Stafford Motor Company', 'Prestige Automobile',
-            'Asia Motor Works', 'Central Finance Company PLC'
-        ]
-        
-        supplier_types = ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider']
-        
+        # Generate supplier data
         suppliers = pd.DataFrame({
-            'SupplierID': [f"SUP{str(i).zfill(3)}" for i in range(1, 21)],
-            'CompanyName': np.random.choice(sri_lankan_supplier_companies, 20, replace=False),
-            'ContactPerson': [f"{np.random.choice(['Kamal', 'Nimal', 'Sunil', 'Rohan', 'Ajith', 'Chaminda', 'Pradeep', 'Nuwan', 'Dinesh', 'Mahesh', 'Saman', 'Ruwan', 'Gayan', 'Chathura', 'Thilina'])} {np.random.choice(['Silva', 'Perera', 'Fernando', 'Jayawardena', 'Gunasekara', 'Wijesinghe', 'Rajapaksa', 'Wickramasinghe', 'Mendis', 'Bandara'])}" for _ in range(20)],
-            'SupplierType': np.random.choice(supplier_types, 20),
-            'Address': [f"{np.random.randint(100, 999)}, {np.random.choice(['Galle Road', 'Kandy Road', 'Negombo Road', 'Baseline Road', 'Duplication Road'])}, {np.random.choice(['Colombo 03', 'Colombo 04', 'Dehiwala', 'Mount Lavinia', 'Moratuwa', 'Kandy', 'Galle', 'Negombo'])}" for _ in range(20)],
-            'Phone': [f"011{np.random.randint(2000000, 2999999)}" for _ in range(20)],
-            'Email': [f"{company.lower().replace(' ', '').replace('(', '').replace(')', '').replace('pvt', '').replace('plc', '').replace('ltd', '')}@gmail.com" for company in np.random.choice(sri_lankan_supplier_companies, 20, replace=False)],
-            'Rating': np.random.choice([3.5, 4.0, 4.2, 4.5, 4.7, 4.8, 4.9, 5.0], 20),
-            'LastDelivery': pd.date_range(start='2024-01-01', end='2025-06-01', periods=20).strftime('%Y-%m-%d'),
-            'TotalOrders': np.random.randint(5, 150, 20),
-            'Status': np.random.choice(['Active', 'Pending', 'Suspended'], 20, p=[0.8, 0.15, 0.05])
+            'SupplierID': range(1, 11),
+            'FirstName': [f"Supplier_{i}" for i in range(1, 11)],
+            'LastName': [f"LastName_{i}" for i in range(1, 11)],
+            'Address': [f"Supplier Address {i}" for i in range(1, 11)],
+            'NIC': [f"{np.random.randint(100000000, 999999999)}V" for _ in range(10)],
+            'Phone': [f"07{np.random.randint(10000000, 99999999)}" for _ in range(10)]
         })
         
         st.dataframe(suppliers, use_container_width=True)
@@ -757,16 +587,13 @@ elif st.session_state.current_page == 'supplier_management':
         
         col1, col2 = st.columns(2)
         with col1:
-            company_name = st.text_input("Company Name")
-            contact_person = st.text_input("Contact Person")
-            supplier_type = st.selectbox("Supplier Type", ['Vehicle Importer', 'Parts Supplier', 'Service Provider', 'Finance Partner', 'Insurance Provider'])
+            supplier_first_name = st.text_input("First Name")
             supplier_address = st.text_area("Address")
+            supplier_nic = st.text_input("NIC Number")
         
         with col2:
-            phone_number = st.text_input("Phone Number")
-            email_address = st.text_input("Email Address")
-            rating = st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5, 4.2, 4.0, 3.5])
-            status = st.selectbox("Status", ['Active', 'Pending', 'Suspended'])
+            supplier_last_name = st.text_input("Last Name")
+            supplier_phone = st.text_input("Phone Numbers")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -778,29 +605,23 @@ elif st.session_state.current_page == 'supplier_management':
     
     with tab3:
         st.subheader("Update Supplier")
-        
-        # Use realistic supplier data for update
-        sri_lankan_supplier_companies = [
-            'Abans PLC', 'Singer (Sri Lanka) PLC', 'Softlogic Holdings PLC', 'Hemas Holdings PLC',
-            'John Keells Holdings PLC', 'Cargills (Ceylon) PLC', 'Commercial Bank of Ceylon PLC',
-            'Dialog Axiata PLC', 'Ceylon Tobacco Company PLC', 'Lanka IOC PLC'
-        ]
-        
-        supplier_to_update = st.selectbox("Select Supplier", sri_lankan_supplier_companies)
+        suppliers = pd.DataFrame({
+            'SupplierID': range(1, 11),
+            'FirstName': [f"Supplier_{i}" for i in range(1, 11)],
+            'LastName': [f"LastName_{i}" for i in range(1, 11)]
+        })
+        supplier_to_update = st.selectbox("Select Supplier", suppliers['FirstName'].tolist())
         
         if supplier_to_update:
             col1, col2 = st.columns(2)
             with col1:
-                st.text_input("Company Name", value=supplier_to_update, key="update_sup_company")
-                st.text_input("Contact Person", value="Kamal Silva", key="update_sup_contact")
-                st.selectbox("Supplier Type", ['Vehicle Importer', 'Parts Supplier', 'Service Provider'], key="update_sup_type")
-                st.text_area("Address", value="123, Galle Road, Colombo 03", key="update_sup_address")
+                st.text_input("First Name", value="Sample", key="update_sup_fname")
+                st.text_area("Address", value="Sample Address", key="update_sup_address")
+                st.text_input("NIC Number", value="123456789V", key="update_sup_nic")
             
             with col2:
-                st.text_input("Phone Number", value="0112345678", key="update_sup_phone")
-                st.text_input("Email", value="info@company.lk", key="update_sup_email")
-                st.selectbox("Rating", [5.0, 4.9, 4.8, 4.7, 4.5], key="update_sup_rating")
-                st.selectbox("Status", ['Active', 'Pending', 'Suspended'], key="update_sup_status")
+                st.text_input("Last Name", value="Supplier", key="update_sup_lname")
+                st.text_input("Phone Number", value="0771234567", key="update_sup_phone")
             
             col1, col2 = st.columns(2)
             with col1:
